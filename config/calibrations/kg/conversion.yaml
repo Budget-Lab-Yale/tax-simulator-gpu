@@ -1,0 +1,33 @@
+# Hand-edited. The income-conversion response: how much top salary and active
+# pass-through compensation is repackaged as unrealized equity appreciation when
+# the gap between the household's ordinary marginal rate and its marginal rate
+# on realized long-term gains changes. The converted dollars land in the stock
+# of unrealized gain, which is why this is a piece of kg_dynamics rather than a
+# response of its own.
+#
+# Read by : the behavior leg, through the `conversion` piece of kg_dynamics.
+
+_channel:
+  role: state
+
+conv:
+  value: 0.15
+  kind: judgment
+  note: >
+    Dollars of pay relabeled as equity per dollar of convertible income per
+    unit change in the gap between the ordinary rate and the statutory rate on
+    long-term gains. Mortenson (2016) estimates the response of ordinary
+    income to the net-of-tax rate on capital gains at about -0.24 (Table 5,
+    column 8), or 0.29 percent of ordinary income per percentage point of the
+    gains rate. That value is halved as a judgment, because part of the
+    measured response is probably business income moving between S- and
+    C-corporation form, which the model's entity-shifting response already
+    covers. Jacob Mortenson, "All Income is Not Created Equal: Cross-Tax
+    Elasticity Estimates in the United States," 2016, SSRN 2658902.
+
+pt_labor_share:
+  value: 0.75
+  kind: sourced
+  citation: >
+    Labor-content share of active pass-through income (Smith, Yagan, Zidar and
+    Zwick), applied to the active pass-through legs of the conversion pool.

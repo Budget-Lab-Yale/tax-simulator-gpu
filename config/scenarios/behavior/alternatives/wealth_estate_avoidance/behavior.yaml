@@ -1,0 +1,16 @@
+# Behavior leg alternative -- wealth_estate_avoidance
+#
+# The hidden ledger without the income-side margins: net worth is concealed
+# from a wealth tax, and that concealment carries through to the reported
+# estate, where the own-rate reporting response also applies.
+
+kg_dynamics: none
+
+margins:
+  wealth:
+    public_elasticity: -7.0
+    closely_held_elasticity: -17.0
+    concealed_share_marketable: 1.0
+    concealed_share_closely_held: 0.5
+  estate:
+    estate_reporting_elasticity: 0.16

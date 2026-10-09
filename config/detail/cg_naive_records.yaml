@@ -1,0 +1,19 @@
+# Per-household columns for the naive-methods comparison: each record's
+# long-term gain taxed at preferential rates, and its own marginal tax rate on
+# that gain under current law and under the scenario's law.
+#
+# These are the three numbers a record-level constant-elasticity estimate
+# needs. They come from the mechanical world because that is the only world
+# whose marginal rates the model stores, and from a run with no behavioral
+# response, so the realizations are the ones a naive estimate starts from.
+#
+# The years are the ten-year budget window and 2055, the year the calibration
+# reads its long-run target in.
+variables:
+  - kg_pref
+  - baseline_law_mtr_kg_lt
+  - reform_law_mtr_kg_lt
+
+worlds: [mechanical]
+
+years: 2026:2035 2055

@@ -1,0 +1,12 @@
+# Behavior leg alternative -- top_tax_gains_only
+#
+# The capital gains pieces of the top-tax response stack and nothing else:
+# the realization model and the conversion of ordinary income into gains.
+# Entity shifting, evasion, charitable giving and the estate reporting
+# response run at their neutral values.
+
+kg_dynamics:
+  realization: config/calibrations/kg/realization.yaml
+  conversion: config/calibrations/kg/conversion.yaml
+
+margins: {}

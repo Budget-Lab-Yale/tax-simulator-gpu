@@ -1,0 +1,12 @@
+ID,tax_law,economy,behavior,years
+baseline,default,no_saving_channel,,2026:2035
+k01_rate,top_tax/dials/s_cg_r50,no_saving_channel,kg_dynamics_only,2026:2035
+k02_carryover,top_tax/dials/s_deemed_carryover,no_saving_channel,kg_dynamics_only,2026:2035
+k03_deemed,top_tax/dials/s_deemed_deemed,no_saving_channel,kg_dynamics_only,2026:2035
+k04_rate_carryover,gpu_oracle/cgr50_carryover,no_saving_channel,kg_dynamics_only,2026:2035
+k05_rate_deemed,top_tax/dials/pc_cgr50_deemed,no_saving_channel,kg_dynamics_only,2026:2035
+k06_estate_r45,gpu_oracle/estate_r45_ecur,no_saving_channel,kg_dynamics_only,2026:2035
+k07_rate_estate,gpu_oracle/cgr50_estate_r45,no_saving_channel,kg_dynamics_only,2026:2035
+k08_deemed_e5,top_tax/dials/s_deemed_deemed_e5,no_saving_channel,kg_dynamics_only,2026:2035
+k09_rate_deemed_e5,top_tax/dials/pc_cgr50_deemede5,no_saving_channel,kg_dynamics_only,2026:2035
+k10_rate_mech,top_tax/dials/s_cg_r50,default,kg_dynamics_only,2026:2035

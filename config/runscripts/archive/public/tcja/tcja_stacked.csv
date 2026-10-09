@@ -1,0 +1,10 @@
+ID,tax_law,behavior,years,dist_years,mtr_vars,mtr_types
+baseline,baseline,,2025:2035,2026,part_active kg_lt char_cash,nextdollar nextdollar nextdollar
+01-rates,public/tcja/extension/stacked/01-rates,entity_shifting/pearce_prisinzano charity/50,2025:2035,2026,part_active kg_lt char_cash,nextdollar nextdollar nextdollar
+02-amt,public/tcja/extension/stacked/02-amt,entity_shifting/pearce_prisinzano charity/50,2025:2035,2026,part_active kg_lt char_cash,nextdollar nextdollar nextdollar
+03-std,public/tcja/extension/stacked/03-std,entity_shifting/pearce_prisinzano charity/50,2025:2035,2026,part_active kg_lt char_cash,nextdollar nextdollar nextdollar
+04-pe,public/tcja/extension/stacked/04-pe,entity_shifting/pearce_prisinzano charity/50,2025:2035,2026,part_active kg_lt char_cash,nextdollar nextdollar nextdollar
+05-qbi,public/tcja/extension/stacked/05-qbi,entity_shifting/pearce_prisinzano charity/50,2025:2035,2026,part_active kg_lt char_cash,nextdollar nextdollar nextdollar
+06-losses,public/tcja/extension/stacked/06-losses,entity_shifting/pearce_prisinzano charity/50,2025:2035,2026,part_active kg_lt char_cash,nextdollar nextdollar nextdollar
+07-ctc,public/tcja/extension/stacked/07-ctc,entity_shifting/pearce_prisinzano charity/50,2025:2035,2026,part_active kg_lt char_cash,nextdollar nextdollar nextdollar
+08-item,public/tcja/extension/stacked/08-item,entity_shifting/pearce_prisinzano charity/50,2025:2035,2026,part_active kg_lt char_cash,nextdollar nextdollar nextdollar

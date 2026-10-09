@@ -1,0 +1,28 @@
+# Additional rate of 20 percentage points on long-term gains in the top
+# preferred bracket; dividends unchanged; carryover basis at death; enactment 2027
+kg_top_rate_addon:
+  value:
+    '2014': 0
+    '2027': 0.2
+no_ord_cap:
+  value: 1
+kg_death_regime_equities:
+  value:
+    '2014': 0
+    '2027': 1
+kg_death_regime_pass_throughs:
+  value:
+    '2014': 0
+    '2027': 1
+kg_death_regime_primary_home:
+  value:
+    '2014': 0
+    '2027': 1
+kg_death_regime_other_home:
+  value:
+    '2014': 0
+    '2027': 1
+kg_death_regime_re_fund:
+  value:
+    '2014': 0
+    '2027': 1

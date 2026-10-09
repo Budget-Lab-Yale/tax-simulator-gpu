@@ -1,0 +1,23 @@
+# Which per-household columns a run writes for the scenario that names this
+# file in its runscript's `detail` column: enough to audit a child credit change
+# household by household.
+#
+# `variables` are names the model creates — the calculator's results and the
+# priced marginal rates. Input columns are never written: a downstream
+# consumer already has them from Tax-Data and joins on household ID. Household
+# ID, weight and year are written in every detail file.
+#
+# The child credit is exported as its two halves, the part that can only offset
+# tax owed and the refundable part, because that is how the calculator produces
+# it and their sum is the credit the household got.
+variables: [liab_iit, ctc_nonref, ctc_ref]
+
+# The worlds to write, one file each. `baseline` is the raw household frame
+# under baseline law; `first_order` is the same frame under the reform's law,
+# so the two differ by the tax change alone.
+worlds: [baseline, first_order]
+
+# The years to keep, in the runscript's own year syntax, or the word `all`.
+# The filter is applied on the way out and never changes what the model
+# computes.
+years: all

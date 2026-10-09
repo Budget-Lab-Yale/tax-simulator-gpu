@@ -1,0 +1,3 @@
+ID,tax_law,behavior,years
+baseline,default,,2025:2027
+ex_cdctc,tests/ex_cdctc,,2025:2027

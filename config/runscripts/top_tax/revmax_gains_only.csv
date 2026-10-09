@@ -1,0 +1,8 @@
+ID,tax_law,economy,behavior,years
+baseline,default,default,default,2027:2056
+cg_05pp_stepup,tests/revmax_gains_only/cg_05pp_stepup,default,top_tax_full,2027:2056
+cg_10pp_stepup,tests/revmax_gains_only/cg_10pp_stepup,default,top_tax_full,2027:2056
+cg_15pp_stepup,tests/revmax_gains_only/cg_15pp_stepup,default,top_tax_full,2027:2056
+cg_20pp_stepup,tests/revmax_gains_only/cg_20pp_stepup,default,top_tax_full,2027:2056
+cg_25pp_stepup,tests/revmax_gains_only/cg_25pp_stepup,default,top_tax_full,2027:2056
+cg_30pp_stepup,tests/revmax_gains_only/cg_30pp_stepup,default,top_tax_full,2027:2056

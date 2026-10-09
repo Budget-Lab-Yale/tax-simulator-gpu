@@ -1,0 +1,11 @@
+# Behavior leg alternative -- ot_france_1yr
+#
+# Overtime hours respond to the overtime deduction, phasing in over one year.
+
+kg_dynamics: none
+
+margins:
+  overtime:
+    elasticity_intensive: -1.4688601645123383
+    phase_in_years: 1
+    first_year: 2025

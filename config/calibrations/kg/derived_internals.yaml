@@ -1,0 +1,23 @@
+# Derived internals for the capital-gains model. WRITTEN BY THE MACHINE.
+#
+# No human edits this file. The `calibrate` command rewrites the whole file
+# each time it runs; anything typed in here by hand is lost.
+#
+# This is the record of the last solve. The two fitted numbers, and the data
+# vintages they were fitted under, are in realization.yaml.
+#
+# What you edit instead is the targets file, named under derived_from below.
+# Change a target, then run calibrate.
+
+derived_from: config/calibrations/kg/targets.yaml
+achieved_moments:
+  permanent_realization_elasticity: -0.5998047475746062
+  transitory_realization_elasticity: 1.2000924871249066
+derivation:
+  targets:
+    permanent_realization_elasticity: -0.6
+    transitory_realization_elasticity: 1.2
+  git_commit: de58bf8ec97e44cd6590296d71a3bdbb3a6095e9
+  date: '2026-09-26'
+  notes: Newton's method converged in 0 steps; the furthest a moment finished from
+    its target was 0.000195.

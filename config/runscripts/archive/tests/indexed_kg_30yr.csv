@@ -1,0 +1,4 @@
+ID,tax_law,behavior,years
+baseline,default,,2025:2055
+indexed_kg_prospective,tests/indexed_kg_prospective,,2025:2055
+indexed_kg_retrospective,tests/indexed_kg_retrospective,,2025:2055

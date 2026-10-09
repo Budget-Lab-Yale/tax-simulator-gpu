@@ -1,0 +1,19 @@
+---
+# Top preferential rate on long-term gains raised by 20 points (0.20 to 0.40),
+# in force from 2026, the first simulation year. Nothing rises in the two
+# lower brackets.
+#
+# The rise takes effect in the first year of the window on purpose: with no
+# year of announcement inside the window, the retiming overlay has no earlier
+# year to move realizations into, so the ten-year score holds the long-run
+# response alone.
+rates:
+  value:
+    '2014': [0.0, 0.15, 0.20]
+    '2026': [0.0, 0.15, 0.40]
+
+# Remove the Sec. 1(h) ceiling that caps the preferential rate at the
+# ordinary rate, so that a preferential rate above the top ordinary rate is
+# actually charged. This follows the form_laffer scenarios.
+no_ord_cap:
+  value: 1

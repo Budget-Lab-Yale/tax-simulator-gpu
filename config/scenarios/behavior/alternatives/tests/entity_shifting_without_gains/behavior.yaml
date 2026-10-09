@@ -1,0 +1,12 @@
+# Entity shifting turned on with the gains model off. The run refuses this
+# leg before compiling, because the retained-earnings part of the shareholder
+# price is the tax a deferred dollar bears, which only the gains model
+# computes. Read by tests/unit/run/test_driver.py.
+
+kg_dynamics: none
+
+margins:
+  entity_shifting:
+    semi_elasticity: 0.6313333333333334
+    distributed_share: 0.45
+    retained_deferral_proxy: 0.25

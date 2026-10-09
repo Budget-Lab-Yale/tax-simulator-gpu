@@ -1,0 +1,23 @@
+---
+#------------------------------------------------------------------------------
+# A two-rung test stack whose second rung reads different microdata
+#
+# The first rung raises ordinary rates. The second changes no tax law and names
+# an economy alternative that pins an older Tax-Data vintage, so the two rungs
+# would need two different populations. A run reads one population block and
+# shares it across its scenarios, so this stack cannot be run: the driver has to
+# refuse it by name rather than quietly running the second rung on the first
+# one's microdata.
+#
+# Nothing scores anything with this file. It exists for
+# tests/unit/runs/test_real_run.py, which checks that the refusal happens.
+#------------------------------------------------------------------------------
+
+version: 1
+
+
+provisions:
+  - tests/stack_provisions/1_ord_rates
+
+  - name: 2_other_microdata
+    economy: tests_other_tax_data_pin

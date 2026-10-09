@@ -1,0 +1,6 @@
+ID,tax_law,behavior,years
+baseline,default,,2025:2035
+kg_5pp_top_e62,tests/kg_5pp_top,kg_62,2025:2035
+kg_5pp_top_e70,tests/kg_5pp_top,kg_70,2025:2035
+kg_5pp_all_e62,tests/kg_5pp_all,kg_62,2025:2035
+kg_5pp_all_e70,tests/kg_5pp_all,kg_70,2025:2035

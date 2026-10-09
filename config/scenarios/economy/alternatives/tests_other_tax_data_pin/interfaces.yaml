@@ -1,0 +1,10 @@
+# A test economy alternative whose only difference from the default layer is
+# the microdata it reads: it pins an older Tax-Data vintage.
+#
+# Nothing computes with this. It exists so a test can build a run whose
+# scenarios do not all read the same population, which the driver has to refuse
+# — every scenario in a run shares one population block, so two scenarios on
+# different microdata could not be differenced against each other. The vintage
+# below is the one the default layer pinned before 2026-07-08.
+tax_data_vintage:
+  value: '2026042215'

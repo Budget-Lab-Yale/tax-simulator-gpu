@@ -1,0 +1,43 @@
+---
+#------------------------------------------------------------------------------
+# The Clausing-Sarin package with 25 percent corporate saving
+#
+# The same eight provisions the runscript config/runscripts/clausing_v2_s25.csv
+# scores one row at a time. Each folder here holds only its own change; the
+# model folds them onto baseline law and runs the eight cumulative scenarios,
+# so nothing copies an earlier provision's file forward the way the
+# alternatives/clausing folders do.
+#
+# Provision order is an analytical choice and it changes the reported numbers:
+# repealing the qualified business income deduction against the restored 1997
+# rate schedule raises more than repealing it against current law. This order
+# is the published table's order.
+#
+# The eighth provision changes no tax law. It raises the share of the corporate
+# tax change that shows up as corporate saving, which is an economy assumption,
+# so it keeps the seventh provision's law and names the economy leg instead.
+# That is why a provision is a whole scenario pointer rather than a law folder.
+#
+# This file sits beside the reform folders rather than inside one because that
+# is where a runscript's tax_law cell looks: a cell naming a directory is a
+# single reform, a cell naming a .yaml file is a stack.
+#------------------------------------------------------------------------------
+
+version: 1
+
+# Each provision scored on top of the ones before it.
+
+provisions:
+  - clausing_provisions/01_clinton_rates
+  - clausing_provisions/02_restore_bottom_rates
+  - clausing_provisions/03_199a
+  - clausing_provisions/04_carryover_basis
+  - clausing_provisions/05_pref_rates
+  - clausing_provisions/06_niit_reform
+  - clausing_provisions/07_estate
+
+  # No tax-law change: the seventh provision's law stands and the corporate
+  # saving assumption moves instead. The runscript row this replaces set
+  # economy to clausing_corporate_saving_25 while keeping clausing/07_estate.
+  - name: 08_corporate
+    economy: clausing_corporate_saving_25

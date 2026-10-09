@@ -1,0 +1,25 @@
+# Behavior leg alternative -- top_tax_no_estate
+#
+# top_tax_full with the estate reporting response left off. Used by the
+# capital-gains functional-form and revenue-maximising-rate exercises, which
+# measure an income-side margin and do not want the estate leg moving
+# underneath it. Runs evasion without the estate response on purpose.
+
+kg_dynamics:
+  realization: config/calibrations/kg/realization.yaml
+  conversion: config/calibrations/kg/conversion.yaml
+
+margins:
+  entity_shifting:
+    semi_elasticity: 0.6313333333333334
+    distributed_share: 0.45
+    retained_deferral_proxy: 0.25
+  evasion:
+    elasticity_sole_prop_and_farm: 0.046
+    elasticity_pass_through: 0.052
+    elasticity_rent: 0.04
+    top_end_multiplier: 1.0
+    max_adjustment: 1.0
+  charity:
+    elasticity: -0.5
+    max_percent_change: 1.0

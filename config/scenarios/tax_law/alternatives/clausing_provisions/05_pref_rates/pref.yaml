@@ -1,0 +1,16 @@
+---
+# Clausing reform — Policy 05: Raise preferential rates by 5pp
+# Starting in 2030, lift all three preferential rate brackets by 5pp:
+#   [0.0, 0.15, 0.20] -> [0.05, 0.20, 0.25]
+# Bracket thresholds and indexation are unchanged from baseline.
+#
+# This folder holds only the rate change. Policy 04's carryover-basis regime
+# lives in its own folder and the stack keeps it in force, so the five
+# kg_death_regime_* blocks the hand-maintained clausing/05_pref_rates copies
+# forward are not repeated here.
+
+# Preferred tax rate schedule (raised 5pp across the board in 2030)
+rates:
+  value:
+    '2014': [0.0, 0.15, 0.20]
+    '2030': [0.05, 0.20, 0.25]

@@ -1,0 +1,6 @@
+ID,tax_law,behavior,years,detail
+baseline,default,,2026:2056,
+all_02pp,tests/cg_naive/all_02pp,top_tax_no_estate,2026:2056,
+all3_02pp,tests/cg_naive/all3_02pp,top_tax_no_estate,2026:2056,
+all_02pp_static,tests/cg_naive/all_02pp,,2026:2056,
+all3_02pp_static,tests/cg_naive/all3_02pp,,2026:2056,

@@ -1,0 +1,12 @@
+---
+# All three preferential brackets raised by 2 points (0 to 0.02, 0.15 to
+# 0.17, 0.20 to 0.22), in force from 2026: the shape of the budget option in
+# CBO's Options for Reducing the Deficit that raises the rates on long-term
+# gains and qualified dividends by 2 points.
+rates:
+  value:
+    '2014': [0.0, 0.15, 0.20]
+    '2026': [0.02, 0.17, 0.22]
+
+no_ord_cap:
+  value: 1

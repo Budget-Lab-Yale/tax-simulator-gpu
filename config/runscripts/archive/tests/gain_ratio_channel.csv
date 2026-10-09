@@ -1,0 +1,5 @@
+ID,tax_law,economy,behavior,years
+baseline,default,no_saving_channel,,2026:2055
+cgr50_carryover,gpu_oracle/cgr50_carryover,no_saving_channel,kg_dynamics_only,2026:2055
+clausing_carryover,clausing_2026/04_carryover_basis,no_saving_channel,kg_dynamics_only,2026:2055
+cg_r25_rate_only,top_tax/dials/s_cg_r25,no_saving_channel,kg_dynamics_only,2026:2055

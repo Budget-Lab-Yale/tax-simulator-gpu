@@ -1,0 +1,8 @@
+ID,tax_law,behavior,years,detail
+baseline,default,,2027:2056,
+cg_05pp_stepup_static,tests/revmax/cg_05pp_stepup,,2027:2056,cg_naive_records_all_years.yaml
+cg_10pp_stepup_static,tests/revmax/cg_10pp_stepup,,2027:2056,cg_naive_records_all_years.yaml
+cg_15pp_stepup_static,tests/revmax/cg_15pp_stepup,,2027:2056,cg_naive_records_all_years.yaml
+cg_20pp_stepup_static,tests/revmax/cg_20pp_stepup,,2027:2056,cg_naive_records_all_years.yaml
+cg_25pp_stepup_static,tests/revmax/cg_25pp_stepup,,2027:2056,cg_naive_records_all_years.yaml
+cg_30pp_stepup_static,tests/revmax/cg_30pp_stepup,,2027:2056,cg_naive_records_all_years.yaml

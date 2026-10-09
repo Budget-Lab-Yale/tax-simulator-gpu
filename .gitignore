@@ -1,0 +1,33 @@
+*.npz
+*.csv
+__pycache__/
+*.log
+.venv/
+*.parquet
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+# The law and scenario config tree is versioned text, not data: the blanket
+# CSV ignore above is for model data files, so carve config back in.
+!config/**/*.csv
+# The top-tax dial legends are the join key between the runscript and the
+# surrogate fitter (scenario ID to dial settings), generated alongside the
+# config tree — versioned text, not model data.
+!projects/top_tax/*_legend.csv
+# The golden law fixtures are compiled tax parameters and index series -- no
+# microdata in them -- and the tests need them on any machine, including CI.
+!tests/golden/fixtures/**/*.csv
+!tests/golden/fixtures/**/*.npz
+# Same reasoning for resources/: pre-1970 CPI-U annual averages as BLS
+# published them. A fixed historical record the model reads, not model data.
+!resources/*.csv
+# Internal working notes. They stay in the working tree but are not published.
+CLAUDE.md
+CRUFT.md
+REMAINING_TODOS.md
+docs/RULINGS.md
+docs/MODEL_FIXES_TODO.md
+memos/
+# Report drafts and result archives kept beside the top-tax scripts.
+projects/top_tax/*.md
+projects/top_tax/*.zip

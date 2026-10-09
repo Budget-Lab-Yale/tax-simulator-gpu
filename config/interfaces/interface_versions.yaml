@@ -1,0 +1,22 @@
+---
+# Interface version of each upstream publication a run reads.
+
+Tax-Data:
+  type: model_data
+  version: 1
+
+Macro-Projections: 
+  type: model_data
+  version: 3
+
+Off-Model-Estimates:
+  type: model_data
+  version: 5
+  
+Cost-Recovery-Simulator:
+  type: model_data
+  version: 1
+  
+Estate-Tax-Distribution:
+  type: model_data
+  version: 1

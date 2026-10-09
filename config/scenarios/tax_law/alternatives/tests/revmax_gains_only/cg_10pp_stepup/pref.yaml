@@ -1,0 +1,8 @@
+# Additional rate of 10 percentage points on long-term gains in the top
+# preferred bracket; dividends unchanged; enactment 2027
+kg_top_rate_addon:
+  value:
+    '2014': 0
+    '2027': 0.10
+no_ord_cap:
+  value: 1

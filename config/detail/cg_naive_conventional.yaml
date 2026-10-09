@@ -1,0 +1,9 @@
+# The behavioral half of config/detail/cg_naive_records.yaml: each record's
+# long-term gain taxed at preferential rates after the realization model has
+# responded, so that the model's response and a record-level constant
+# elasticity can be compared household by household.
+variables: [kg_pref]
+
+worlds: [conventional]
+
+years: 2026:2035 2055

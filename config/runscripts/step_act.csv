@@ -1,0 +1,4 @@
+ID,tax_law,economy,behavior,years
+baseline,default,default,,2027:2056
+step_act,step_act/deemed_5m,default,top_tax_full,2027:2056
+step_act_no_excl,step_act/deemed_no_excl,default,top_tax_full,2027:2056

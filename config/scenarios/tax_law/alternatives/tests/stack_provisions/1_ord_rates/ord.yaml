@@ -1,0 +1,20 @@
+---
+# Test stack, provision 1: raise every ordinary rate by two points
+# From 2026 the seven-bracket OBBBA schedule keeps its thresholds and every
+# rate goes up 2pp: {10, 12, 22, 24, 32, 35, 37} becomes
+# {12, 14, 24, 26, 34, 37, 39}. Chosen because it moves the tax of any
+# household with taxable income at all, which is what makes the stacked table's
+# identity worth checking on the three test households; restoring the 39.6% top
+# rate, the obvious choice, is inert on households none of whom reach the top
+# bracket.
+#
+# The whole history is restated rather than just the 2026 change, because
+# replacing a subparameter replaces it entire: a block giving only 2026 would
+# leave the earlier years with bracket thresholds and no rates. Every reform
+# folder in the tree does this, and the schedule lint now requires it.
+
+rates:
+  value:
+    '2014': [0.1, 0.15, 0.25, 0.28, 0.33, 0.35, 0.396]
+    '2018': [0.1, 0.12, 0.22, 0.24, 0.32, 0.35, 0.37]
+    '2026': [0.12, 0.14, 0.24, 0.26, 0.34, 0.37, 0.39]

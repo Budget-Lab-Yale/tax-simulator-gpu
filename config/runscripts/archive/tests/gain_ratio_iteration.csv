@@ -1,0 +1,3 @@
+ID,tax_law,economy,behavior,years
+baseline,default,no_saving_channel,,2026:2055
+carryover,top_tax/dials/s_deemed_carryover,no_saving_channel,kg_dynamics_only_gain_ratio,2026:2055

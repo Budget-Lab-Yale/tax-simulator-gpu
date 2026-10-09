@@ -1,0 +1,5 @@
+ID,tax_law,behavior,years
+baseline,default,,2026:2037
+rate2pp,tests/form_memo/rate2pp,top_tax_full,2026:2037
+deemed,tests/form_memo/deemed,top_tax_full,2026:2037
+rate2pp_deemed,tests/form_memo/rate2pp_deemed,top_tax_full,2026:2037

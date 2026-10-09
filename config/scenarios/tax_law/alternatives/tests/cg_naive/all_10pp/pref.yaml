@@ -1,0 +1,15 @@
+---
+# Both positive preferential brackets raised by 10 points (0.15 to 0.25 and
+# 0.20 to 0.30), in force from 2026. The zero bracket stays at zero, so a
+# household with income below the first threshold faces no change.
+#
+# This is the across-the-board counterpart of the top-bracket rises: the
+# change in the statutory rate is the same for almost every realized dollar,
+# which is the shock the calibration measures its long-run target under.
+rates:
+  value:
+    '2014': [0.0, 0.15, 0.20]
+    '2026': [0.0, 0.25, 0.30]
+
+no_ord_cap:
+  value: 1

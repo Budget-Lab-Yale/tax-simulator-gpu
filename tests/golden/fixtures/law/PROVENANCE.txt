@@ -1,0 +1,7 @@
+compiled_baseline.npz, compiled_baseline_schema.json:
+  built by tests/golden/freeze_compiled_law.py from config/scenarios/tax_law/default
+  and indexes.csv, years 2025-2036
+
+indexes.csv, rounding_goldens.csv:
+  written by the R model's law parser, Tax-Simulator commit d30b4d2d8, R 4.4.1,
+  2026-08-01, from Macro-Projections v3/2026022522/baseline; not regenerated since

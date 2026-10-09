@@ -1,0 +1,8 @@
+# Additional rate of 25 percentage points on qualified dividends in the top
+# preferred bracket; long-term gains unchanged; enactment 2027
+div_top_rate_addon:
+  value:
+    '2014': 0
+    '2027': 0.25
+no_ord_cap:
+  value: 1

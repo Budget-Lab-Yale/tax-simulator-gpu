@@ -1,0 +1,9 @@
+# As cg_naive_records.yaml, every year.
+variables:
+  - kg_pref
+  - baseline_law_mtr_kg_lt
+  - reform_law_mtr_kg_lt
+
+worlds: [mechanical]
+
+years: all

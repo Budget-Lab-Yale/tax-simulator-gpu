@@ -1,0 +1,17 @@
+---
+#------------------------------------------------------------------------------
+# A two-provision stack for the tests: ordinary rates up, standard deduction cut
+#
+# Small on purpose. The two provisions touch different parameter files, so they
+# stack without overwriting each other, and both raise the tax of any household
+# with taxable income, so neither increment is zero and the sum-to-combined
+# identity has something to prove. Used by
+# tests/unit/sim/test_stacked_projection.py.
+#------------------------------------------------------------------------------
+
+version: 1
+
+
+provisions:
+  - tests/stack_provisions/1_ord_rates
+  - tests/stack_provisions/2_standard_deduction

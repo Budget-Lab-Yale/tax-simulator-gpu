@@ -1,0 +1,54 @@
+[project]
+# "taxmodel" avoids colliding with NBER TAXSIM or PSL Tax-Calculator.
+name = "taxmodel"
+version = "0.1.0"
+description = "GPU-native rebuild of the Budget Lab Tax-Simulator (Python + JAX)"
+requires-python = "==3.12.*"
+dependencies = [
+    "jax==0.7.0",
+    "numpy>=2.0",
+    "pandas>=2.2",
+    "pyarrow>=17.0",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+# The front door: one runscript in, one run directory out. Everything it can
+# decide is operational; see src/taxmodel/run/cli.py.
+taxmodel-run = "taxmodel.run.cli:main"
+# The separate calibrate command: declared targets in,
+# the capital-gains model's two internal numbers out. A run never calls it.
+taxmodel-calibrate = "taxmodel.calibration.cli:main"
+
+[project.optional-dependencies]
+# The CUDA wheels are only wanted on the cluster (H200 nodes). Laptops
+# install the base package and run the same code on CPU.
+cuda = ["jax[cuda12]==0.7.0"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/taxmodel"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Tests import shared helpers as `tests.conftest` and `tests.tolerances`,
+# so the repository root has to be on the import path.
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+# Defaults plus import hygiene. Style debates are settled by the formatter,
+# not by reviewers.
+extend-select = ["I"]

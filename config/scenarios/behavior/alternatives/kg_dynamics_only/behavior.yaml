@@ -1,0 +1,14 @@
+# Behavior leg alternative -- kg_dynamics_only
+#
+# The capital-gains realization model and nothing else: realization timing responds to
+# rates, and no other margin moves. The clean read on the gains channel.
+#
+# kg_dynamics binds the pieces of the gains machinery this scenario uses, each
+# to the calibration file carrying its value and provenance. A sweep binds a
+# different file of the same shape, which is how the sweep ends up recorded in
+# the vintage.
+
+kg_dynamics:
+  realization: config/calibrations/kg/realization.yaml
+
+margins: {}

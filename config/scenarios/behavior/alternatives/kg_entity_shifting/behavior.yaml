@@ -1,0 +1,14 @@
+# Behavior leg alternative -- kg_entity_shifting
+#
+# The capital-gains realization model plus entity shifting. With it on, the
+# retained-earnings leg is priced off the equivalent tax rate the gains model
+# computes rather than off a zero.
+
+kg_dynamics:
+  realization: config/calibrations/kg/realization.yaml
+
+margins:
+  entity_shifting:
+    semi_elasticity: 0.6313333333333334
+    distributed_share: 0.45
+    retained_deferral_proxy: 0.25

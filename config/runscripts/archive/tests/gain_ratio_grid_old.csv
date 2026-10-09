@@ -1,0 +1,7 @@
+ID,tax_law,economy,behavior,years
+baseline,default,no_saving_channel,,2026:2055
+carryover,top_tax/dials/s_deemed_carryover,no_saving_channel,kg_dynamics_only,2026:2055
+deemed,top_tax/dials/s_deemed_deemed,no_saving_channel,kg_dynamics_only,2026:2055
+rate25,top_tax/dials/s_cg_r25,no_saving_channel,kg_dynamics_only,2026:2055
+rate25_carryover,top_tax/dials/pc_cgr25_carryover,no_saving_channel,kg_dynamics_only,2026:2055
+rate25_deemed,top_tax/dials/pc_cgr25_deemed,no_saving_channel,kg_dynamics_only,2026:2055

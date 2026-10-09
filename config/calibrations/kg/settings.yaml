@@ -1,0 +1,92 @@
+# Hand-edited. The one file in config/calibrations/ no calibrator writes.
+#
+# The capital gains machinery's model-form switches and judgment calls: the choices
+# that are made rather than measured.
+#
+# They are part of what the calibrations assumed. The calibration entries record the
+# settings they were calibrated under (as comments on each entry), so changing
+# one here means those fits are wrong until re-derived.
+
+_channel:
+  role: state
+
+
+appreciation:
+  value: 0.0677
+  kind: structural
+  note: >
+    The yearly rate at which assets appreciate, nominal, the same for every
+    household and asset class. Read off the 2026 Tax-Data population, vintage
+    2026070814: total accrued gain across the five tracked asset classes over
+    total holdings, weighted by the survey weights. It includes owner-occupied
+    housing, which is most of the balance sheet below the top. The selling
+    choice ages a portfolio's gain share with it: appreciation adds pure gain,
+    selling and new saving add basis.
+
+applier_allocation:
+  value: '0.5'
+  kind: structural
+  note: >
+    How the lock-in and carryover stock realization is distributed across records
+    within a cell: 'R' in proportion to positive realized gains, which targets active
+    realizers, 'G' in proportion to the gain stock, which targets holders, or a blend
+    between 0 and 1. The default is a blend because a realized carryover dollar needs
+    a holder who sells, so neither proxy alone is right. Mechanical carryover revenue
+    is monotone in it and deemed revenue does not depend on it. The eta and
+    timeable_share calibrations are conditioned on 0.5, so changing it requires
+    re-pinning both.
+
+timing_window:
+  value: 1
+  kind: structural
+  note: >
+    Half-width in years over which timeable realizations may retime. Part of the
+    conditioning set for the timeable-share calibration.
+
+timing_ref_wedge:
+  value: 0.05
+  kind: structural
+  note: >
+    Reference wedge for the timing overlay. The fraction of planned dollars moving
+    toward the best year in the window is
+
+      clamp(rate change / ref_wedge, 0, 1)
+
+    so five points move the whole bucket and one point moves a fifth of it. Part of
+    the conditioning set for both calibrations.
+
+#-------------------------------------------------------------------------------
+# Judgment -- chosen, with no recorded derivation
+#-------------------------------------------------------------------------------
+
+char_extensive_intercept:
+  value: -2.415
+  kind: judgment
+  note: >
+    Logit intercept for the probability that a decedent makes any charitable
+    bequest, on log gross estate in millions of char_base_year dollars. The four
+    charitable coefficients come from a two-equation logit the model's author fitted
+    to IRS estate tax data. The fit itself is not in the repository.
+
+char_extensive_ln_slope:
+  value: 0.458
+  kind: judgment
+  note: Log-estate slope of the extensive charitable bequest logit. For the source, see char_extensive_intercept.
+
+char_intensive_intercept:
+  value: -1.872
+  kind: judgment
+  note: Logit intercept for the charitable share conditional on giving. For the source, see char_extensive_intercept.
+
+char_intensive_ln_slope:
+  value: 0.468
+  kind: judgment
+  note: Log-estate slope of the intensive charitable bequest logit. For the source, see char_extensive_intercept.
+
+char_base_year:
+  value: 2026
+  kind: structural
+  note: >
+    CPI-U base year the gross estate is deflated to before entering the charitable
+    logits. It must match the year the coefficients were fitted in, which cannot be
+    checked from the repository because the fit is not in it.

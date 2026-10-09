@@ -1,0 +1,35 @@
+---
+# Test stack, provision 2: cut the standard deduction back to its 2018 level
+# From 2026 the single filer's standard deduction goes from OBBBA's $15,750 to
+# $12,000 and the head-of-household filer's from $23,625 to $18,000. Joint
+# filers get twice the single amount through the file's own filing-status
+# mapper, which this folder leaves alone.
+#
+# A different parameter file from provision 1 on purpose: the two provisions
+# stack without touching each other, which is the case the subparameter-level
+# merge exists for. Both provisions move every household with taxable income,
+# so neither increment is zero.
+#
+# Indexation is restated as `default` so the cut amounts still grow with
+# chained CPI-U from the file's own indexation_defaults; leaving the fields out
+# would freeze the deduction in nominal terms, which the lint refuses.
+
+value_single:
+  value:
+    '2014': 3000
+    '2018': 12000
+    '2026': 12000
+  i_measure: default
+  i_base_year: default
+  i_direction: default
+  i_increment: default
+
+value_head:
+  value:
+    '2014': 4400
+    '2018': 18000
+    '2026': 18000
+  i_measure: default
+  i_base_year: default
+  i_direction: default
+  i_increment: default

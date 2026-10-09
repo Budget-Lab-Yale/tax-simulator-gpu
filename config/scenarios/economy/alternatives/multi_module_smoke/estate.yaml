@@ -1,0 +1,5 @@
+# This file keeps no entries. The fixture pins an older Tax-Data vintage on
+# purpose and the valuation bridge is locked against overrides, so if this
+# scenario is ever resolved through the staleness check it will stop on the
+# vintage mismatch. Its only consumer reads the interface pins directly
+# (tests/unit/config/test_interfaces.py).

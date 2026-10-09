@@ -1,0 +1,14 @@
+ID,tax_law,economy,behavior,years
+baseline,default,default,default,2027:2056
+cg_05pp_stepup_gains_only,tests/revmax/cg_05pp_stepup,default,top_tax_gains_only,2027:2056
+cg_05pp_stepup_realization_only,tests/revmax/cg_05pp_stepup,default,kg_dynamics_only,2027:2056
+cg_10pp_stepup_gains_only,tests/revmax/cg_10pp_stepup,default,top_tax_gains_only,2027:2056
+cg_10pp_stepup_realization_only,tests/revmax/cg_10pp_stepup,default,kg_dynamics_only,2027:2056
+cg_15pp_stepup_gains_only,tests/revmax/cg_15pp_stepup,default,top_tax_gains_only,2027:2056
+cg_15pp_stepup_realization_only,tests/revmax/cg_15pp_stepup,default,kg_dynamics_only,2027:2056
+cg_20pp_stepup_gains_only,tests/revmax/cg_20pp_stepup,default,top_tax_gains_only,2027:2056
+cg_20pp_stepup_realization_only,tests/revmax/cg_20pp_stepup,default,kg_dynamics_only,2027:2056
+cg_25pp_stepup_gains_only,tests/revmax/cg_25pp_stepup,default,top_tax_gains_only,2027:2056
+cg_25pp_stepup_realization_only,tests/revmax/cg_25pp_stepup,default,kg_dynamics_only,2027:2056
+cg_30pp_stepup_gains_only,tests/revmax/cg_30pp_stepup,default,top_tax_gains_only,2027:2056
+cg_30pp_stepup_realization_only,tests/revmax/cg_30pp_stepup,default,kg_dynamics_only,2027:2056

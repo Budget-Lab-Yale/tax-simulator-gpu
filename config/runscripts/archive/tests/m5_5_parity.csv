@@ -1,0 +1,4 @@
+ID,tax_law,economy,behavior,years
+baseline,default,no_saving_channel,,2026:2036
+s01_ord_r39p6,top_tax/dials/s_ord_r39p6,no_saving_channel,,2026:2036
+s05_wealth_r1_t50,top_tax/dials/s_wealth_r1_t50,no_saving_channel,,2026:2036

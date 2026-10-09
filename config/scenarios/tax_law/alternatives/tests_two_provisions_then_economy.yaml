@@ -1,0 +1,28 @@
+---
+#------------------------------------------------------------------------------
+# A three-rung test stack: two tax-law provisions, then an economy change
+#
+# The two tax-law provisions are the ones tests_two_provisions.yaml uses —
+# ordinary rates up two points, then the standard deduction cut. The third rung
+# changes no tax law at all: it keeps the second provision's law and turns the
+# saving-financing channel off, which is an economy assumption. That is the
+# shape of the real Clausing package's eighth provision, in the
+# smallest form a test can run end to end.
+#
+# Used by tests/unit/runs/test_real_run.py, which runs the whole stack through
+# the driver on three households and checks that the third rung's run and its
+# manifest name the economy leg the rung asked for rather than the one the
+# runscript row named.
+#------------------------------------------------------------------------------
+
+version: 1
+
+
+provisions:
+  - tests/stack_provisions/1_ord_rates
+  - tests/stack_provisions/2_standard_deduction
+
+  # No tax-law change: the second provision's law stands and the saving
+  # assumption moves instead.
+  - name: 3_no_saving_channel
+    economy: no_saving_channel

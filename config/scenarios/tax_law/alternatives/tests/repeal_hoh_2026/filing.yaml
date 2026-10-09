@@ -1,0 +1,10 @@
+# Head-of-household filing status is eliminated from 2026: would-be head-of-
+# household units are recoded as single filers before the calculator runs, so
+# every filing-status-dependent parameter applies its single-filer column.
+# Read by tests/unit/years/test_head_of_household_repeal.py.
+---
+
+repeal_hoh:
+  value:
+    '2014': 0
+    '2026': 1

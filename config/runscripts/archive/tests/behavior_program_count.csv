@@ -1,0 +1,4 @@
+ID,tax_law,economy,behavior,years
+baseline,default,no_saving_channel,,2025:2028
+cg50_kg_only,top_tax/dials/s_cg_r50,no_saving_channel,kg_dynamics_only,2025:2028
+cg50_entity,top_tax/dials/s_cg_r50,no_saving_channel,kg_entity_shifting,2025:2028

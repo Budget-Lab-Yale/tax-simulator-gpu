@@ -1,0 +1,34 @@
+---
+# The STEP Act's deemed realization at death with no exclusion at all: the
+# comparison leg that shows what the $5M/$10M exclusion costs. Same regimes
+# as step_act/deemed_5m, exclusion zero, rates current law.
+
+kg_death_regime_equities:
+  value:
+    '2014': 0
+    '2027': 2
+kg_death_regime_pass_throughs:
+  value:
+    '2014': 0
+    '2027': 2
+kg_death_regime_primary_home:
+  value:
+    '2014': 0
+    '2027': 2
+kg_death_regime_other_home:
+  value:
+    '2014': 0
+    '2027': 2
+kg_death_regime_re_fund:
+  value:
+    '2014': 0
+    '2027': 2
+
+kg_death_gain_excl_single:
+  value:
+    '2014': 0
+    '2027': 0
+kg_death_gain_excl_married:
+  value:
+    '2014': 0
+    '2027': 0
