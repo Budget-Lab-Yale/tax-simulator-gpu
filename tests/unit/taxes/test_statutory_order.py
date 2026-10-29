@@ -146,6 +146,24 @@ def test_a_wage_only_single_filer_pays_the_ordinary_schedule(baseline_law):
     assert float(out["liab_pr"]) == pytest.approx(2 * 80_000.0 * 0.0765)
 
 
+def test_a_net_pass_through_loss_lowers_agi(baseline_law):
+    # $80,000 of wages, a $30,000 net partnership loss ($10,000 of active
+    # income less $40,000 of passive loss) and $2,000 of rent: Schedule E
+    # income is -$28,000 and AGI is $52,000.
+    law = single_filer_law(baseline_law)
+    out = one_record(
+        law,
+        wages_base1=80_000.0,
+        part_active=10_000.0,
+        part_passive_loss=40_000.0,
+        rent=2_000.0,
+    )
+    assert float(out["part_scorp"]) == pytest.approx(0.0)
+    assert float(out["part_scorp_loss"]) == pytest.approx(30_000.0)
+    assert float(out["sch_e"]) == pytest.approx(-28_000.0)
+    assert float(out["agi"]) == pytest.approx(52_000.0)
+
+
 def test_the_chain_says_which_columns_a_short_frame_is_missing(baseline_law):
     records = dict(synthetic_records([1]))
     del records["wagebill_farm"]
