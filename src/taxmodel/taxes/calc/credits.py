@@ -577,7 +577,9 @@ def calc_eitc(records: Mapping[str, Array], law: EitcLaw) -> dict[str, Array]:
         + records["div_ord"]
         + records["div_pref"]
         + floored_at(records["txbl_kg"], 0.0)
-        + floored_at(records["sch_e"] - records["part_scorp"], 0.0)
+        # Net rental, royalty, estate and trust income. Partnership and
+        # S-corporation income is left out of the test.
+        + floored_at(records["net_rent"] + records["net_estate"], 0.0)
     )
     # Eligibility survives exactly at the investment-income limit and is lost
     # immediately above it.

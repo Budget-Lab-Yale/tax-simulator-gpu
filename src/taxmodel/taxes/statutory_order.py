@@ -86,10 +86,12 @@ def derive_vars(records: Records) -> dict[str, Array]:
     """Schedule E aggregates, the same for every scenario and every year.
 
     Partnership and S-corporation results arrive split into active, passive
-    and Section 179 pieces; the 1040 wants them netted. `part_scorp` and
-    `part_scorp_loss` are the netted amount split into its positive and
-    negative halves, which the EITC's investment-income test and the reporting
-    tables use.
+    and Section 179 pieces; the 1040 wants them netted. Schedule E income is
+    the net partnership and S-corporation amount, gain or loss, plus net rent
+    and net estate and trust income, so a net pass-through loss lowers AGI.
+    The loss pieces arrive as the losses allowed on the return. `part_scorp`
+    and `part_scorp_loss` are the netted pass-through amount split into its
+    positive and negative halves, for the reporting tables.
     """
     part = (
         records["part_active"]
@@ -120,7 +122,7 @@ def derive_vars(records: Records) -> dict[str, Array]:
         "pt": pass_through + records["sole_prop1"] + records["sole_prop2"],
         "net_rent": net_rent,
         "net_estate": net_estate,
-        "sch_e": part_scorp + net_rent + net_estate,
+        "sch_e": pass_through + net_rent + net_estate,
     }
 
 
