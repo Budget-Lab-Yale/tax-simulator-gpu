@@ -19,6 +19,9 @@ taxmodel-run = "taxmodel.run.cli:main"
 # The separate calibrate command: declared targets in,
 # the capital-gains model's two internal numbers out. A run never calls it.
 taxmodel-calibrate = "taxmodel.calibration.cli:main"
+# Taxes for a parquet file of records under one year's law, keyed by record id;
+# see src/taxmodel/run/batch.py.
+taxmodel-batch = "taxmodel.run.batch:main"
 
 [project.optional-dependencies]
 # The CUDA wheels are only wanted on the cluster (H200 nodes). Laptops
