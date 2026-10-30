@@ -137,6 +137,21 @@ def main(argv=None) -> None:
         out[k] = np.asarray(v, dtype=np.float64)
     for k in FRAME_STEP_OUTPUTS:
         out[k] = np.asarray(built[k], dtype=np.float64)
+    # The chain zeroes these Schedule A components on non-itemizers and
+    # selects the winning return when it compares charitable deduction forms.
+    # Keep the components before the overall Pease reduction, as on SOI's
+    # category lines. The total-minus-four residual is separate: Pease and
+    # later overall limits can make it differ from actual other deductions.
+    for name, source in (("claimed_medical", "med_item_ded"),
+                         ("claimed_taxes", "salt_item_ded"),
+                         ("claimed_interest", "int_item_ded"),
+                         ("claimed_charity", "char_item_ded")):
+        out[name] = out[source].copy()
+    out["claimed_other"] = (out["casualty_item_ded"] + out["misc_item_ded"]
+                            + out["other_item_ded"])
+    out["itemized_total_minus_four"] = (out["item_ded"] - out["claimed_medical"]
+                                        - out["claimed_taxes"] - out["claimed_interest"]
+                                        - out["claimed_charity"])
     for section in a.law_sections:
         values = getattr(law.calculator, section)
         for field in dataclasses.fields(values):
