@@ -82,6 +82,10 @@ RECORD_COLUMNS: tuple[str, ...] = (
     *(f"basis.{name}" for name in DEEMED_ASSET_CLASSES),
 )
 
+# Household columns read when every year has them. A population without
+# dep_status has no dependent filers (applier.DEPENDENT_FILER_COLUMN).
+OPTIONAL_RECORD_COLUMNS: tuple[str, ...] = ("dep_status",)
+
 
 # ---------------------------------------------------------------------------
 # What goes into the program
@@ -209,9 +213,14 @@ def _stack_records(
     small transfers a year-by-year, scenario-by-scenario path makes.
     """
 
+    present = [
+        name
+        for name in OPTIONAL_RECORD_COLUMNS
+        if all(name in records for records in records_by_year)
+    ]
     return {
         name: jnp.asarray(np.stack([records[name] for records in records_by_year]))
-        for name in RECORD_COLUMNS
+        for name in (*RECORD_COLUMNS, *present)
     }
 
 

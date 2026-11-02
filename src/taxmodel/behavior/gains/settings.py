@@ -383,7 +383,12 @@ def build_conversion_pool(
         return exported_column(rate_exports, name)
 
     weight = jnp.asarray(host_records["weight"])
-    age_index = applier_module.cell_row_for_household(host_records, KG_N_AGES)
+    # A dependent filer is in no age cell, so it converts nothing.
+    age_index = jnp.where(
+        applier_module.in_the_gains_cells(host_records) > 0,
+        applier_module.cell_row_for_household(host_records, KG_N_AGES),
+        -1,
+    )
 
     filing_status = np.asarray(stacked("mechanical_filing_status"))
     thresholds = _top_bracket_threshold(reform_law, n_years)

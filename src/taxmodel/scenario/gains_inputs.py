@@ -34,6 +34,7 @@ from collections.abc import Sequence
 import jax.numpy as jnp
 import numpy as np
 
+from taxmodel.behavior.kg.applier import DEPENDENT_FILER_COLUMN
 from taxmodel.frame import widowhood
 from taxmodel.frame.build_frame import DONOR_CLUSTER_GROSS_ESTATE_FLOOR
 from taxmodel.frame.population import PopulationSource
@@ -88,12 +89,17 @@ def host_records_by_year(
         )
     if shares is None:
         shares = widowhood.read_widowhood_shares()
+    # A population without dep_status has no dependent filers.
+    has_dependent_flag = DEPENDENT_FILER_COLUMN in population.field_names
+    columns_read = POPULATION_COLUMNS + (
+        (DEPENDENT_FILER_COLUMN,) if has_dependent_flag else ()
+    )
 
     frames: list[dict[str, np.ndarray]] = []
     for year in years:
         # One year at a time, and only the columns below, so that a run whose
         # population is read from disk does not hold every year's households.
-        one_year = population.year(int(year), columns=POPULATION_COLUMNS)
+        one_year = population.year(int(year), columns=columns_read)
         valid = np.asarray(one_year.valid, dtype=bool)
 
         def column(name: str, one_year=one_year) -> np.ndarray:
@@ -145,6 +151,11 @@ def host_records_by_year(
             "age1": age,
             "age2": np.nan_to_num(column("age2"), nan=0.0),
             "filing_status": filing_status,
+            DEPENDENT_FILER_COLUMN: (
+                np.nan_to_num(column(DEPENDENT_FILER_COLUMN), nan=0.0)
+                if has_dependent_flag
+                else np.zeros_like(filing_status)
+            ),
             "m_household": mortality,
             "p_widow": p_widow,
             "unrealized_gain_stock": gain_stock,

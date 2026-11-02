@@ -111,6 +111,13 @@ WIDOWHOOD_COLUMN = "p_widow"
 # for the part of the allocation that goes by holdings.
 UNREALIZED_GAIN_STOCK_COLUMN = "unrealized_gain_stock"
 
+# Dependent filers have no balance sheet on the file, so they hold no
+# unrealized gain the model can follow. They are left out of the age cells:
+# they add nothing to a cell's stock, realizations or rate averages, the cell's
+# rate factor and extra realizations are not spread to them, and they convert
+# no income into gains. A frame without the column has no dependent filers.
+DEPENDENT_FILER_COLUMN = "dep_status"
+
 # Filing statuses of an unmarried filer.  Their death-gain exclusion has two
 # branches — their own amount, and the married amount they would have if
 # widowed — which are priced separately and blended by the widowhood
@@ -185,6 +192,8 @@ MANIFEST: dict[str, Any] = {
         *(VALUE_COLUMN_PREFIX + name for name in DEEMED_ASSET_CLASSES),
         *(BASIS_COLUMN_PREFIX + name for name in DEEMED_ASSET_CLASSES),
     ),
+    # A frame without the dependent filer flag has no dependent filers.
+    "optional_reads": (DEPENDENT_FILER_COLUMN,),
     "writes": (
         "kg_lt",
         LOCKIN_COLUMN,
@@ -287,6 +296,17 @@ def cell_row_for_household(records: Records, n_ages: int) -> Array:
 
     ages = jnp.arange(KG_AGE_MIN, KG_AGE_MIN + n_ages)
     return age_cohort(records, ages) - KG_AGE_MIN
+
+
+def in_the_gains_cells(records: Records) -> Array:
+    """One for a household counted in its age cell, zero for a dependent filer.
+
+    See ``DEPENDENT_FILER_COLUMN``.  A missing entry reads as not a dependent.
+    """
+
+    template = jnp.asarray(records["kg_lt"], dtype=jnp.float64)
+    dependent = bs.column(records, DEPENDENT_FILER_COLUMN, template)
+    return jnp.where(dependent == 1, 0.0, 1.0)
 
 
 def gain_by_class(records: Records, value_factor: Array | None = None) -> Array:
@@ -433,7 +453,10 @@ def apply_cell_table(
     def cell(field: str) -> Array:
         return cell_table_column(cell_table, field)[row]
 
-    rate_factor = cell("rate_factor")
+    # A dependent filer keeps its realized gains as they are and takes no share
+    # of its cell's extra realizations.
+    in_cells = in_the_gains_cells(records)
+    rate_factor = jnp.where(in_cells > 0, cell("rate_factor"), 1.0)
     extra_realizations = cell("extra_realizations")
     deemed_factor = cell("deemed_factor")
     baseline_realizations = cell("baseline_realizations")
@@ -481,8 +504,9 @@ def apply_cell_table(
     weight_on_holdings = jnp.asarray(
         settings["allocation_weight_on_holdings"], dtype=jnp.float64
     )
-    allocation = (1.0 - weight_on_holdings) * by_realizations + (
-        weight_on_holdings * by_holdings
+    allocation = in_cells * (
+        (1.0 - weight_on_holdings) * by_realizations
+        + weight_on_holdings * by_holdings
     )
     lockin = extra_realizations * allocation
 

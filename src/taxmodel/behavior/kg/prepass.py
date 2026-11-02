@@ -82,6 +82,7 @@ from .applier import (
     charitable_bequest_probability,
     gain_after_the_home_sale_exclusion,
     gain_by_class,
+    in_the_gains_cells,
     taxable_shares_if_widowed_or_not,
 )
 from .stock_inputs import KG_AGE_MIN, KG_N_AGES, BaselineCells
@@ -357,14 +358,17 @@ def population_age_cells(
 ) -> PopulationAgeCells:
     """Add one year's households up into the age-cell facts no reform changes.
 
-    The households are the whole year's population, weighted.  Nobody is
-    excluded: gains at death never enter ``kg_lt``, so these are the numbers a
-    living taxpayer reports and no decedents need taking out.  Nothing here
-    reads the law.
+    The households are the whole year's population, weighted, except dependent
+    filers, who have no balance sheet (``applier.DEPENDENT_FILER_COLUMN``).
+    Decedents are not taken out: gains at death never enter ``kg_lt``, so these
+    are the numbers a living taxpayer reports.  Nothing here reads the law.
     """
 
     row = cell_row_for_household(records, n_ages)
-    weight = jnp.asarray(records["weight"], dtype=jnp.float64)
+    # Dependent filers are left out of the cells (applier.DEPENDENT_FILER_COLUMN).
+    weight = jnp.asarray(records["weight"], dtype=jnp.float64) * in_the_gains_cells(
+        records
+    )
     mortality = jnp.asarray(records["m_household"], dtype=jnp.float64)
 
     gain_by_asset_class = gain_by_class(records)
@@ -438,7 +442,10 @@ def scenario_age_cells(
     """
 
     row = cell_row_for_household(records, n_ages)
-    weight = jnp.asarray(records["weight"], dtype=jnp.float64)
+    # Dependent filers are left out of the cells (applier.DEPENDENT_FILER_COLUMN).
+    weight = jnp.asarray(records["weight"], dtype=jnp.float64) * in_the_gains_cells(
+        records
+    )
 
     at_stake_by_class = _gain_at_stake_at_death_by_class(records, exclusions)
 
@@ -570,7 +577,10 @@ def cell_weights_from_records(
     asset.
     """
 
-    weight = jnp.asarray(records["weight"], dtype=jnp.float64)
+    # Dependent filers are left out of the cells (applier.DEPENDENT_FILER_COLUMN).
+    weight = jnp.asarray(records["weight"], dtype=jnp.float64) * in_the_gains_cells(
+        records
+    )
     realized = jnp.maximum(jnp.asarray(records["kg_lt"], dtype=jnp.float64), 0.0)
     gain_stock = jnp.sum(gain_by_class(records), axis=-1)
     return CellWeights(
