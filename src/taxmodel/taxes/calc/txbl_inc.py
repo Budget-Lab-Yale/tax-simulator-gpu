@@ -78,6 +78,7 @@ def calc_txbl_inc(records: Mapping[str, Array], law: TaxableIncomeLaw) -> dict[s
         - records["qbi_ded"]
         - records["tip_ded"]
         - records["ot_ded"]
+        - records["auto_int_ded"]
         - senior_for_taxable_income,
         0.0,
     )

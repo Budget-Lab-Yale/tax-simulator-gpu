@@ -104,6 +104,7 @@ def test_amt_swaps_only_ordinary_schedule_and_nets_regular_liability():
         "tip_ded": jnp.zeros(1),
         "ot_ded": jnp.zeros(1),
         "senior_ded": jnp.zeros(1),
+        "auto_int_ded": jnp.zeros(1),
         "itemizing": jnp.array([False]),
         "salt_item_ded": jnp.zeros(1),
         "misc_item_ded": jnp.zeros(1),
@@ -140,7 +141,7 @@ def test_amt_swaps_only_ordinary_schedule_and_nets_regular_liability():
     np.testing.assert_allclose(result["liab_bc"], [4_700.0])
 
 
-def _amt_with_senior_deduction(pe_pref):
+def _amt_with_senior_deduction(pe_pref, auto_int_ded=0.0):
     """AMT gross income for a non-itemizer and an itemizer, each with $100,000
     of AGI and a $6,000 senior deduction."""
     records = {
@@ -158,6 +159,7 @@ def _amt_with_senior_deduction(pe_pref):
         "qbi_ded": jnp.zeros(2),
         "tip_ded": jnp.zeros(2),
         "ot_ded": jnp.zeros(2),
+        "auto_int_ded": jnp.full(2, auto_int_ded),
         "salt_item_ded": jnp.zeros(2),
         "misc_item_ded": jnp.zeros(2),
         "state_ref": jnp.zeros(2),
@@ -194,6 +196,14 @@ def test_amt_subtracts_the_senior_deduction_once_where_section_151_is_allowed():
     # With section 151 deductions allowed against the AMT (pe_pref of 0), the
     # senior deduction comes off once for itemizer and non-itemizer alike.
     np.testing.assert_allclose(_amt_with_senior_deduction(0.0), [94_000.0, 64_000.0])
+
+
+def test_amt_allows_the_car_loan_interest_deduction():
+    # $2,000 of car loan interest is deducted from AMT income for itemizer and
+    # non-itemizer alike.
+    np.testing.assert_allclose(
+        _amt_with_senior_deduction(1.0, auto_int_ded=2_000.0), [98_000.0, 68_000.0]
+    )
 
 
 # An invented three-bracket preferential schedule whose top bracket starts at

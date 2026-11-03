@@ -139,8 +139,6 @@ FORM_1040_VARIABLES: tuple[str, ...] = (
     "other_inc",
     "gross_inc",
     # Above-the-line deductions
-    "auto_int_exp",
-    "auto_int_ded",
     "sl_int_ded",
     "char_above_ded",
     "above_ded",
@@ -165,6 +163,8 @@ FORM_1040_VARIABLES: tuple[str, ...] = (
     "tip_ded",
     "ot_ded",
     "senior_ded",
+    "auto_int_exp",
+    "auto_int_ded",
     "char_nonitem_ded",
     # Taxable income and tax before credits
     "txbl_inc",

@@ -23,6 +23,7 @@ def one_return(**columns):
         "tip_ded": 0.0,
         "ot_ded": 0.0,
         "senior_ded": 0.0,
+        "auto_int_ded": 0.0,
         "char_cash": 0.0,
         "char_above_ded": 0.0,
     }
@@ -74,3 +75,15 @@ def test_no_non_itemizer_deduction_where_the_law_has_none():
     out = calc_txbl_inc(one_return(char_cash=3000.0), LAW)
     np.testing.assert_allclose(out["char_nonitem_ded"], [0.0])
     np.testing.assert_allclose(out["txbl_inc"], [90000.0])
+
+
+def test_car_loan_interest_is_deducted_whether_or_not_the_filer_itemizes():
+    # $2,000 of car loan interest comes off taxable income for a non-itemizer
+    # ($100,000 - $10,000 - $2,000) and for an itemizer ($100,000 - $15,000 -
+    # $2,000). It is not part of the deduction `ded` either way.
+    out = calc_txbl_inc(one_return(auto_int_ded=2000.0), LAW)
+    assert not out["itemizing"][0]
+    np.testing.assert_allclose([out["ded"][0], out["txbl_inc"][0]], [10000.0, 88000.0])
+    out = calc_txbl_inc(one_return(item_ded=15000.0, auto_int_ded=2000.0), LAW)
+    assert out["itemizing"][0]
+    np.testing.assert_allclose([out["ded"][0], out["txbl_inc"][0]], [15000.0, 83000.0])

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 import jax.numpy as jnp
 
-from taxmodel.taxes.calc._corners import capped_at, floored_at, phased_out
+from taxmodel.taxes.calc._corners import capped_at, floored_at
 from taxmodel.taxes.calc._schedules import last_live_rate, live_slots, upper_edges
 
 Array = jnp.ndarray
@@ -27,10 +27,6 @@ class AgiLaw:
     tuition_ded_limit: Array
     dpad_limit: Array
     char_above_limit: Array
-    auto_int_ded_limit: Array
-    auto_int_ded_po_thresh: Array
-    auto_int_ded_po_rate: Array
-    auto_int_ded_new: Array
     ss: SocialSecurityLaw
 
 
@@ -104,16 +100,6 @@ def calc_agi(records: Mapping[str, Array], law: AgiLaw) -> dict[str, Array]:
         + capped_at(records["tuition_ded"], law.tuition_ded_limit)
         + capped_at(records["dpad"], law.dpad_limit)
     )
-    magi = inc_ex_ss + records["gross_ss"] - above_ded_ex_sl
-    # The auto-interest deduction is separately limited and phased out before
-    # it enters Social Security modified AGI.
-    auto_int_ded = capped_at(records["auto_int_exp"], law.auto_int_ded_limit)
-    auto_int_ded = phased_out(
-        auto_int_ded, magi, law.auto_int_ded_po_thresh, law.auto_int_ded_po_rate
-    )
-    # The 58% new-car share is the calibrated Experian 2024 financing share.
-    auto_int_ded *= (law.auto_int_ded_new == 0) | (records["r.new_car"] < 0.58)
-    above_ded_ex_sl += auto_int_ded
     txbl_ss = calc_ss(
         {"gross_ss": records["gross_ss"], "magi_ss": inc_ex_ss + records["exempt_int"] - above_ded_ex_sl},
         law.ss,
@@ -124,7 +110,6 @@ def calc_agi(records: Mapping[str, Array], law: AgiLaw) -> dict[str, Array]:
         "txbl_ss": txbl_ss,
         "excess_bus_loss": excess_bus_loss,
         "char_above_ded": char_above_ded,
-        "auto_int_ded": auto_int_ded,
         "gross_inc": gross_inc,
         "above_ded": above_ded,
         "agi": gross_inc - above_ded,

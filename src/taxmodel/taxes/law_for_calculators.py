@@ -108,10 +108,6 @@ AGI = {
     "tuition_ded_limit": Ref("agi.tuition_ded_limit"),
     "dpad_limit": Ref("agi.dpad_limit"),
     "char_above_limit": Ref("char.above_limit"),
-    "auto_int_ded_limit": Ref("agi.auto_int_ded_limit"),
-    "auto_int_ded_po_thresh": Ref("agi.auto_int_ded_po_thresh"),
-    "auto_int_ded_po_rate": Ref("agi.auto_int_ded_po_rate"),
-    "auto_int_ded_new": Ref("agi.auto_int_ded_new"),
 }
 
 CAPITAL_GAINS = {
@@ -199,6 +195,12 @@ BELOW_DEDUCTION = {
     "senior_ded_value": Ref("below.senior_ded_value"),
     "senior_ded_po_thresh": Ref("below.senior_ded_po_thresh"),
     "senior_ded_po_rate": Ref("below.senior_ded_po_rate"),
+    # The car loan interest parameters keep their `agi.` names, which reforms
+    # and the auto-interest behavioral module refer to.
+    "auto_int_ded_limit": Ref("agi.auto_int_ded_limit"),
+    "auto_int_ded_po_thresh": Ref("agi.auto_int_ded_po_thresh"),
+    "auto_int_ded_po_rate": Ref("agi.auto_int_ded_po_rate"),
+    "auto_int_ded_new": Ref("agi.auto_int_ded_new"),
 }
 
 TAXABLE_INCOME = {

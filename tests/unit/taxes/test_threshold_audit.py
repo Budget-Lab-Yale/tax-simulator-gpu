@@ -296,40 +296,6 @@ def dependent_standard_deduction_cap(law: YearLaw) -> Overrides:
 # Above-the-line deductions and adjusted gross income
 # --------------------------------------------------------------------------
 
-# Only a new car's loan interest qualifies, so the new-car draw is put below
-# the financed-new share the calculator tests it against.
-BOUGHT_A_NEW_CAR = 0.1
-
-
-def auto_interest_cap(law: YearLaw) -> Overrides:
-    """Car loan interest exactly at the dollar limit on the deduction."""
-    return {
-        "wages_base1": 50_000.0,
-        "auto_int_exp": value(law.agi.auto_int_ded_limit),
-        "r.new_car": BOUGHT_A_NEW_CAR,
-    }
-
-
-def auto_interest_phase_out_start(law: YearLaw) -> Overrides:
-    """Modified AGI exactly where the car loan interest deduction starts falling."""
-    return {
-        "wages_base1": value(law.agi.auto_int_ded_po_thresh),
-        "auto_int_exp": 5_000.0,
-        "r.new_car": BOUGHT_A_NEW_CAR,
-    }
-
-
-def auto_interest_phase_out_end(law: YearLaw) -> Overrides:
-    """Modified AGI exactly where the car loan interest deduction runs out."""
-    interest = 5_000.0
-    return {
-        "wages_base1": value(law.agi.auto_int_ded_po_thresh)
-        + interest / value(law.agi.auto_int_ded_po_rate),
-        "auto_int_exp": interest,
-        "r.new_car": BOUGHT_A_NEW_CAR,
-    }
-
-
 def social_security_tier(law: YearLaw, slot: int) -> Overrides:
     """Provisional income exactly on one Social Security inclusion threshold.
 
@@ -442,7 +408,7 @@ def qbi_minimum_deduction_income(law: YearLaw) -> Overrides:
 
 
 # --------------------------------------------------------------------------
-# The tip, overtime and senior deductions
+# The tip, overtime, senior and car loan interest deductions
 # --------------------------------------------------------------------------
 
 
@@ -537,6 +503,40 @@ def senior_deduction_phase_out_end(law: YearLaw) -> Overrides:
         "wages_base1": value(law.below_ded.senior_ded_po_thresh)
         + value(law.below_ded.senior_ded_value)
         / value(law.below_ded.senior_ded_po_rate),
+    }
+
+
+# Only a new car's loan interest qualifies, so the new-car draw is put below
+# the financed-new share the calculator tests it against.
+BOUGHT_A_NEW_CAR = 0.1
+
+
+def auto_interest_cap(law: YearLaw) -> Overrides:
+    """Car loan interest exactly at the dollar limit on the deduction."""
+    return {
+        "wages_base1": 50_000.0,
+        "auto_int_exp": value(law.below_ded.auto_int_ded_limit),
+        "r.new_car": BOUGHT_A_NEW_CAR,
+    }
+
+
+def auto_interest_phase_out_start(law: YearLaw) -> Overrides:
+    """AGI exactly where the car loan interest deduction starts falling."""
+    return {
+        "wages_base1": value(law.below_ded.auto_int_ded_po_thresh),
+        "auto_int_exp": 5_000.0,
+        "r.new_car": BOUGHT_A_NEW_CAR,
+    }
+
+
+def auto_interest_phase_out_end(law: YearLaw) -> Overrides:
+    """AGI exactly where the car loan interest deduction runs out."""
+    interest = 5_000.0
+    return {
+        "wages_base1": value(law.below_ded.auto_int_ded_po_thresh)
+        + interest / value(law.below_ded.auto_int_ded_po_rate),
+        "auto_int_exp": interest,
+        "r.new_car": BOUGHT_A_NEW_CAR,
     }
 
 

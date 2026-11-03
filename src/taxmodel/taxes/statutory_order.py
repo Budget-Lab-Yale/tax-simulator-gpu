@@ -191,8 +191,8 @@ def run_1040(
     frame.update(calc_pe_ded(frame, law.pe_ded))
     # The QBI deduction forms its own provisional taxable income from the
     # larger of the standard and itemized deductions, before the itemize
-    # choice is made and before the tip, overtime and senior deductions exist,
-    # in the order the statute sets.
+    # choice is made and before the tip, overtime, senior and car loan interest
+    # deductions exist, in the order the statute sets.
     frame.update(calc_qbi_ded(frame, law.qbi_ded))
     frame.update(calc_below_ded(frame, law.below_ded))
     frame.update(calc_txbl_inc(frame, law.txbl_inc))

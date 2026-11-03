@@ -4,8 +4,8 @@ import numpy as np
 from taxmodel.taxes.calc.agi import AgiLaw, SocialSecurityLaw, calc_agi, calc_ss
 
 SS = SocialSecurityLaw(0.5, jnp.array([0.5, 0.85]), jnp.array([25000.0, 34000.0]))
-LAW = AgiLaw(2100.0, 1000.0, 4000.0, 5000.0, 300.0, 2500.0, 100000.0, 0.1, 1.0, SS)
-NAMES = ["wages_base1", "wages_base2", "tips1", "tips2", "ot1", "ot2", "txbl_int", "exempt_int", "div_ord", "div_pref", "txbl_ira_dist", "txbl_pens_dist", "gross_ss", "txbl_kg", "other_gains", "state_ref", "alimony", "divorce_year", "sole_prop1", "sole_prop2", "sch_e", "pt", "farm1", "farm2", "ui", "other_inc", "ed_exp", "hsa_contr", "liab_seca_er", "trad_contr_ira", "sl_int_ded", "keogh_contr", "se_health", "early_penalty", "alimony_exp", "tuition_ded", "dpad", "char_cash", "char_noncash", "other_above_ded", "auto_int_exp", "r.bus_loss", "r.new_car"]
+LAW = AgiLaw(2100.0, 1000.0, 4000.0, 5000.0, 300.0, SS)
+NAMES = ["wages_base1", "wages_base2", "tips1", "tips2", "ot1", "ot2", "txbl_int", "exempt_int", "div_ord", "div_pref", "txbl_ira_dist", "txbl_pens_dist", "gross_ss", "txbl_kg", "other_gains", "state_ref", "alimony", "divorce_year", "sole_prop1", "sole_prop2", "sch_e", "pt", "farm1", "farm2", "ui", "other_inc", "ed_exp", "hsa_contr", "liab_seca_er", "trad_contr_ira", "sl_int_ded", "keogh_contr", "se_health", "early_penalty", "alimony_exp", "tuition_ded", "dpad", "char_cash", "char_noncash", "other_above_ded", "r.bus_loss"]
 
 
 def records(**values):
@@ -35,3 +35,11 @@ def test_ss_brackets_may_vary_by_filing_status():
     # Single: capped at 85% of $20,000. Joint: 50% of ($44,000 - $32,000)
     # plus 85% of ($50,000 - $44,000) = $6,000 + $5,100.
     np.testing.assert_allclose(out["txbl_ss"], [17_000.0, 11_100.0])
+
+
+def test_car_loan_interest_does_not_reduce_agi():
+    # Car loan interest is deducted below AGI (IRC 163(h)(4)), so $3,000 of it
+    # leaves $40,000 of wages as $40,000 of AGI. calc_agi does not read it.
+    out = calc_agi({**records(wages_base1=40_000.0), "auto_int_exp": jnp.asarray(3_000.0)}, LAW)
+    np.testing.assert_allclose(out["agi"], 40_000.0)
+    assert "auto_int_ded" not in out

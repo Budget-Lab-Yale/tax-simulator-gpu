@@ -225,6 +225,8 @@ def calc_amt(
     # and the senior deduction is subtracted once, only where the law allows
     # section 151 deductions against the AMT.
     senior_in_ded = jnp.where(records["itemizing"], 0.0, records["senior_ded"])
+    # The tip, overtime and car loan interest deductions are allowed against
+    # the AMT.
     amt_gross_inc = (
         records["agi"]
         - (records["ded"] - senior_in_ded)
@@ -232,6 +234,7 @@ def calc_amt(
         - records["qbi_ded"]
         - records["tip_ded"]
         - records["ot_ded"]
+        - records["auto_int_ded"]
         + addback
         - records["state_ref"]
         + records["amt_nols"]

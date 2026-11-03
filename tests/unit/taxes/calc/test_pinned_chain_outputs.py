@@ -109,14 +109,12 @@ def households():
     # income is wages, and nothing is deducted above the line, so adjusted
     # gross income is base pay plus tips plus overtime, and base pay is set to
     # land that sum on the threshold. Each threshold is read off the law bound
-    # to that household's filing status. The auto-loan household is the one
-    # exception: its deduction is above the line, and its own phase-out is
-    # tested against income before that deduction, which is again the wage.
+    # to that household's filing status.
     thresholds = (
         law.below_ded.tip_ded_po_thresh,
         law.below_ded.ot_ded_po_thresh,
         law.below_ded.senior_ded_po_thresh,
-        law.agi.auto_int_ded_po_thresh,
+        law.below_ded.auto_int_ded_po_thresh,
         law.caregiver_cred.po_thresh,
         law.ctc.baby_bonus_po_thresh,
         law.amt.exempt_po_thresh,
@@ -138,7 +136,7 @@ def households():
         columns["wages_base1"][slot] = agi - TIE_TIPS - TIE_OVERTIME
         columns["tips1"][slot] = TIE_TIPS
         columns["ot1"][slot] = TIE_OVERTIME
-        if threshold is law.agi.auto_int_ded_po_thresh:
+        if threshold is law.below_ded.auto_int_ded_po_thresh:
             columns["auto_int_exp"][slot] = 2_000.0
         columns["care_exp"][slot] = 5_000.0
         columns["aoc_exp"][slot] = 3_000.0

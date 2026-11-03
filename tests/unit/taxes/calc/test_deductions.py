@@ -184,6 +184,10 @@ def test_itemized_and_below_line_deductions():
         1000.0,
         jnp.inf,
         0.0,
+        0.0,
+        jnp.inf,
+        0.0,
+        0.0,
     )
     below_data = {
         "tips1": jnp.array([100.0]),
@@ -200,6 +204,8 @@ def test_itemized_and_below_line_deductions():
         "ot2": jnp.zeros(1),
         "age1": jnp.array([65.0]),
         "age2": jnp.array([jnp.nan]),
+        "auto_int_exp": jnp.zeros(1),
+        "r.new_car": jnp.zeros(1),
     }
     below = calc_below_ded(below_data, below_law)
     # $90 of overtime divided by three is the FLSA half-only deduction.
@@ -228,6 +234,10 @@ def test_below_line_deduction_counts_both_seniors():
         1_000.0,
         jnp.inf,
         0.0,
+        0.0,
+        jnp.inf,
+        0.0,
+        0.0,
     )
     records = {
         "tips1": jnp.zeros(1),
@@ -241,10 +251,49 @@ def test_below_line_deduction_counts_both_seniors():
         "ot2": jnp.zeros(1),
         "age1": jnp.array([65.0]),
         "age2": jnp.array([65.0]),
+        "auto_int_exp": jnp.zeros(1),
+        "r.new_car": jnp.zeros(1),
     }
 
     # Two qualifying spouses each receive the invented $1,000 senior deduction.
     np.testing.assert_allclose(calc_below_ded(records, law)["senior_ded"], [2_000.0])
+
+
+def test_car_loan_interest_deduction_is_capped_and_phased_out_with_agi():
+    # The 2025 law: $10,000 limit, phased out at 20 cents per dollar of AGI
+    # above $100,000, new cars only (IRC 163(h)(4)). The tip, overtime and
+    # senior deductions are switched off.
+    law = BelowDeductionLaw(
+        **{
+            **{name: 0.0 for name in BelowDeductionLaw.__dataclass_fields__},
+            "tip_ded_po_type": 1.0,
+            "ot_ded_po_type": 1.0,
+            "auto_int_ded_limit": 10_000.0,
+            "auto_int_ded_po_thresh": 100_000.0,
+            "auto_int_ded_po_rate": 0.2,
+            "auto_int_ded_new": 1.0,
+        }
+    )
+    n = 4
+    records = {
+        name: jnp.zeros(n)
+        for name in (
+            "tips1", "tips2", "wages_base1", "wages_base2", "tips_lh1",
+            "tips_lh2", "ot1", "ot2", "age1",
+        )
+    }
+    records["age2"] = jnp.full(n, jnp.nan)
+    records["agi"] = jnp.array([50_000.0, 110_000.0, 130_000.0, 50_000.0])
+    records["auto_int_exp"] = jnp.array([12_000.0, 5_000.0, 5_000.0, 5_000.0])
+    # The last household's loan is for a used car: its draw is above the
+    # new-car share of 58%.
+    records["r.new_car"] = jnp.array([0.1, 0.1, 0.1, 0.9])
+
+    # $12,000 is capped at $10,000. At $110,000 of AGI, $5,000 less 20% of
+    # $10,000 is $3,000. At $130,000 the $6,000 reduction exhausts it.
+    np.testing.assert_allclose(
+        calc_below_ded(records, law)["auto_int_ded"], [10_000.0, 3_000.0, 0.0, 0.0]
+    )
 
 
 # The dependent flag may arrive as a bool or as a 0/1 number; both give the

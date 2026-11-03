@@ -106,6 +106,16 @@ class BelowDeductionLaw:
     senior_ded_value: Array
     senior_ded_po_thresh: Array
     senior_ded_po_rate: Array
+    auto_int_ded_limit: Array
+    auto_int_ded_po_thresh: Array
+    auto_int_ded_po_rate: Array
+    auto_int_ded_new: Array
+
+
+# The share of car loans that finance a new car (Experian, State of the
+# Automotive Finance Market, 2024). A household whose draw falls below it
+# bought a new car.
+NEW_CAR_FINANCING_SHARE = 0.58
 
 
 def calc_std_ded(
@@ -437,7 +447,7 @@ def _capped_then_phased_out(
 def calc_below_ded(
     records: Mapping[str, Array], law: BelowDeductionLaw
 ) -> dict[str, Array]:
-    """Return the tip, overtime, and senior deductions below AGI."""
+    """Return the tip, overtime, senior and car loan interest deductions below AGI."""
     # Tips and overtime are unavailable once an earner's own wages exceed the
     # applicable eligibility limit; a joint return evaluates each earner alone.
     # The limit is tested against the earner's whole pay, tips and overtime
@@ -481,4 +491,20 @@ def calc_below_ded(
         law.senior_ded_po_thresh,
         seniors * law.senior_ded_po_rate,
     )
-    return {"tip_ded": tip, "ot_ded": ot, "senior_ded": senior}
+    # Interest on a loan for a new passenger vehicle (IRC 163(h)(4)) is
+    # deducted below AGI by itemizers and non-itemizers alike. It phases out
+    # with modified AGI, which is AGI plus foreign income exclusions the model
+    # does not carry.
+    auto_int = capped_at(records["auto_int_exp"], law.auto_int_ded_limit)
+    auto_int = phased_out(
+        auto_int, records["agi"], law.auto_int_ded_po_thresh, law.auto_int_ded_po_rate
+    )
+    auto_int *= (law.auto_int_ded_new == 0) | (
+        records["r.new_car"] < NEW_CAR_FINANCING_SHARE
+    )
+    return {
+        "tip_ded": tip,
+        "ot_ded": ot,
+        "senior_ded": senior,
+        "auto_int_ded": auto_int,
+    }
