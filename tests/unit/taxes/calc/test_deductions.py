@@ -33,12 +33,30 @@ def test_standard_deduction_and_personal_exemption_boundaries():
     pe = calc_pe_ded(
         {
             "filing_status": jnp.array([1.0]),
+            "dep_status": jnp.array([0.0]),
             "n_dep": jnp.array([0.0]),
             "agi": jnp.array([150.0]),
         },
         PersonalExemptionLaw(1000.0, 100.0, 100.0, 1.0, 0.25, 0.0, 1.0),
     )
     np.testing.assert_allclose(pe["pe_ded"], [500.0])
+
+
+def test_a_dependent_filer_has_no_exemption_for_himself():
+    """IRC 151(d)(2). Under 2017 law ($4,050 an exemption, no phase-out at
+    these incomes): a single filer gets one exemption, a joint filer two, a
+    single filer with a dependent two, and a single dependent filer none."""
+    law = PersonalExemptionLaw(4050.0, jnp.inf, 1.0, 0.0, 0.02, 1.0, 1.0)
+    pe = calc_pe_ded(
+        {
+            "filing_status": jnp.array([1.0, 2.0, 1.0, 1.0]),
+            "dep_status": jnp.array([0.0, 0.0, 0.0, 1.0]),
+            "n_dep": jnp.array([0.0, 0.0, 1.0, 0.0]),
+            "agi": jnp.array([20_000.0, 20_000.0, 20_000.0, 5_000.0]),
+        },
+        law,
+    )
+    np.testing.assert_allclose(pe["pe_ded"], [4050.0, 8100.0, 8100.0, 0.0])
 
 
 def test_standard_deduction_counts_each_age_and_blindness_bonus():

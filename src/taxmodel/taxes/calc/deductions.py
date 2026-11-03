@@ -274,8 +274,14 @@ def calc_pe_ded(
 ) -> dict[str, Array]:
     """Return personal exemptions after the statutory AGI phaseout."""
     # The exemption count separately admits filing-unit members and dependents,
-    # allowing reforms to turn either group on or off.
-    n_pe = (law.nondep_qualify == 1) * (1 + (records["filing_status"] == 2)) + (
+    # allowing reforms to turn either group on or off. A filer who can be
+    # claimed as a dependent on another return gets no exemption for himself
+    # (IRC 151(d)(2)), or for a spouse on a joint return. The dependent flag is
+    # compared with zero, as in calc_std_ded.
+    own_exemptions = (1 + (records["filing_status"] == 2)) * (
+        records["dep_status"] == 0
+    )
+    n_pe = (law.nondep_qualify == 1) * own_exemptions + (
         law.dep_qualify == 1
     ) * records["n_dep"]
     po_share = phase_out_share(records["agi"], law.po_thresh, law.po_range)
