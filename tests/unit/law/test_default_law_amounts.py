@@ -92,3 +92,11 @@ def test_pre_obbba_law_and_the_charity_repeals_have_no_non_itemizer_deduction(
         CONFIG_ROOT, (2026,), index_table, alternative=alternative, lint=False
     )
     assert by_status(law, "char.nonitem_limit", 2026) == {1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0}
+
+
+def test_the_residential_energy_credits_end_after_2025(default_law):
+    """IRC 25C(i) and 25D(h) as amended by OBBBA secs. 70505 and 70506; IRS
+    Fact Sheet 2025-05: neither credit is allowed for property placed in
+    service, or expenditures made, after 31 December 2025."""
+    assert by_status(default_law, "credits.repeal_res_energy", 2025) == {1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0}
+    assert by_status(default_law, "credits.repeal_res_energy", 2026) == {1: 1.0, 2: 1.0, 3: 1.0, 4: 1.0}
