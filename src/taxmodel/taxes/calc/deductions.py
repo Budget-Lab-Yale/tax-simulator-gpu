@@ -304,14 +304,21 @@ def calc_pe_ded(
 
 
 def calc_qbi_ded(records: Mapping[str, Array], law: QbiLaw) -> dict[str, Array]:
-    """The §199A deduction, limited by a provisional taxable income."""
-    # The provisional taxable income subtracts the larger of the standard and
-    # itemized deductions, before calc_txbl_inc chooses a deduction or applies
-    # the tip, overtime, and senior deductions.
+    """The §199A deduction, limited by taxable income before the deduction."""
+    # Taxable income before the QBI deduction (IRC 199A(e)(1)) measures both the
+    # taxable income limit and the phase-in of the wage limit. It subtracts the
+    # larger of the standard and itemized deductions, before calc_txbl_inc
+    # chooses a deduction, and the tip, overtime, senior and car loan interest
+    # deductions, which every filer takes (Form 8995 line 11: Form 1040 line
+    # 11a less lines 12e and 13b).
     txbl_inc = floored_at(
         records["agi"]
         - floored_at(records["item_ded"], records["std_ded"])
-        - records["pe_ded"],
+        - records["pe_ded"]
+        - records["tip_ded"]
+        - records["ot_ded"]
+        - records["senior_ded"]
+        - records["auto_int_ded"],
         0.0,
     )
     # §199A works on the household's income from each kind of business, so

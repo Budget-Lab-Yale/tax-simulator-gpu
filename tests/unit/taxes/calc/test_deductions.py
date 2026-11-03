@@ -97,6 +97,10 @@ def test_qbi_limit_binds_and_is_slack():
         "sstb_farm": jnp.zeros(2),
         "div_pref": jnp.zeros(2),
         "kg_pref": jnp.zeros(2),
+        "tip_ded": jnp.zeros(2),
+        "ot_ded": jnp.zeros(2),
+        "senior_ded": jnp.zeros(2),
+        "auto_int_ded": jnp.zeros(2),
     }
     # $1,000 × 20% = $200 is slack at $10,000 taxable income and capped at $100.
     np.testing.assert_allclose(calc_qbi_ded(values, law)["qbi_ded"], [200.0, 100.0])
@@ -367,10 +371,75 @@ def test_qbi_accepts_per_record_law_parameters():
         "sstb_part": zeros,
         "sstb_scorp": zeros,
         "sstb_farm": zeros,
+        "tip_ded": zeros,
+        "ot_ded": zeros,
+        "senior_ded": zeros,
+        "auto_int_ded": zeros,
     }
     # Both records are far below the phaseout threshold, so the deduction is
     # 20% of $50,000 for each.
     np.testing.assert_allclose(calc_qbi_ded(records, law)["qbi_ded"], [10_000.0, 10_000.0])
+
+
+def _one_sole_proprietor(agi, std_ded, sole_prop, **deductions):
+    """One household whose only business is a sole proprietorship with no
+    employees, with the tip, overtime, senior and car loan interest deductions
+    given (zero if not given)."""
+    records = {
+        name: jnp.zeros(1)
+        for name in (
+            "item_ded", "pe_ded", "div_pref", "kg_pref", "sole_prop2", "part",
+            "scorp", "farm1", "farm2", "wagebill_sole_prop", "wagebill_part",
+            "wagebill_scorp", "wagebill_farm", "sstb_sole_prop", "sstb_part",
+            "sstb_scorp", "sstb_farm", "tip_ded", "ot_ded", "senior_ded",
+            "auto_int_ded",
+        )
+    }
+    records["agi"] = jnp.array([agi])
+    records["std_ded"] = jnp.array([std_ded])
+    records["sole_prop1"] = jnp.array([sole_prop])
+    records.update({name: jnp.array([value]) for name, value in deductions.items()})
+    return records
+
+
+# Taxable income before the QBI deduction (IRC 199A(e)(1)) is net of the tip,
+# overtime, senior and car loan interest deductions, so they lower the taxable
+# income limit.
+def test_qbi_taxable_income_limit_is_net_of_the_schedule_1a_deductions():
+    law = QbiLaw(0.2, 1e6, 1e6, 1e6, 1e6, 0.0, 1.0, 0.5, 0.2, 0.0, 0.0)
+    # $50,000 of business income gives a tentative deduction of $10,000.
+    # Without the four deductions, taxable income before the QBI deduction is
+    # $60,000 - $15,000 = $45,000, and the limit is 20% of it, $9,000.
+    np.testing.assert_allclose(
+        calc_qbi_ded(_one_sole_proprietor(60_000.0, 15_000.0, 50_000.0), law)["qbi_ded"],
+        [9_000.0],
+    )
+    # $4,000 of tips, $3,000 of overtime, a $6,000 senior deduction and $2,000
+    # of car loan interest bring it to $30,000, and the limit to $6,000.
+    records = _one_sole_proprietor(
+        60_000.0, 15_000.0, 50_000.0,
+        tip_ded=4_000.0, ot_ded=3_000.0, senior_ded=6_000.0, auto_int_ded=2_000.0,
+    )
+    np.testing.assert_allclose(calc_qbi_ded(records, law)["qbi_ded"], [6_000.0])
+
+
+# The phase-in of the wage limit is measured on the same taxable income
+# (IRC 199A(b)(3)(B)), so the four deductions move a filer back down the range.
+def test_qbi_phase_in_is_measured_net_of_the_schedule_1a_deductions():
+    # The 2025 joint threshold of $394,600 and range of $100,000.
+    law = QbiLaw(0.2, 394_600.0, 394_600.0, 100_000.0, 100_000.0, 0.0, 1.0, 0.5, 0.2, 0.0, 0.0)
+    # $300,000 of business income with no wages paid: a tentative deduction of
+    # $60,000, all of it above the wage limit of zero. Taxable income before the
+    # QBI deduction is $440,000 - $31,500 = $408,500, 13.9% of the way through
+    # the range, so the deduction is $60,000 × (1 - 0.139) = $51,660.
+    np.testing.assert_allclose(
+        calc_qbi_ded(_one_sole_proprietor(440_000.0, 31_500.0, 300_000.0), law)["qbi_ded"],
+        [51_660.0],
+    )
+    # An $11,000 overtime deduction brings it to $397,500, 2.9% of the way
+    # through the range: $60,000 × (1 - 0.029) = $58,260.
+    records = _one_sole_proprietor(440_000.0, 31_500.0, 300_000.0, ot_ded=11_000.0)
+    np.testing.assert_allclose(calc_qbi_ded(records, law)["qbi_ded"], [58_260.0])
 
 
 def test_mortgage_balance_limit_by_vintage():
