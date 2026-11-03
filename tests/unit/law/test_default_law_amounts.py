@@ -51,3 +51,44 @@ def test_the_2026_standard_deduction_is_indexed_from_2024(default_law):
         3: 16_100.0,
         4: 24_150.0,
     }
+
+
+def test_the_non_itemizer_charitable_deduction_starts_in_2026(default_law):
+    """IRC 170(p) as amended by OBBBA sec. 70424: up to $1,000 of cash gifts,
+    $2,000 on a joint return, for taxable years beginning after 2025."""
+    assert by_status(default_law, "char.nonitem_limit", 2025) == {1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0}
+    assert by_status(default_law, "char.nonitem_limit", 2026) == {
+        1: 1_000.0,
+        2: 2_000.0,
+        3: 1_000.0,
+        4: 1_000.0,
+    }
+
+
+@pytest.mark.parametrize(
+    "alternative",
+    [
+        "baseline_2024",
+        "baseline_2024_pre_obbba",
+        "baseline_2024_tcja_ext",
+        "tests/baseline_2017",
+        "tests/tcja_2017",
+        "tests/booker_ctc_tcja_ext",
+        "public/obbba/retrospective_2026/stack_vs_2024/01-rates",
+        "public/obbba/retrospective_2026/stack_vs_2024/02-amt",
+        "tests/tax_expenditures/repeal_char",
+        "tests/tax_expenditures/booker_repeal_char",
+    ],
+)
+def test_pre_obbba_law_and_the_charity_repeals_have_no_non_itemizer_deduction(
+    alternative,
+):
+    """Each of these restates the charitable law, so each states the amount."""
+    # Several of these folders have lint findings that have nothing to do with
+    # charity (indexed amounts restated without their indexation), so the
+    # lint is not run here.
+    index_table = index_table_from_frame(pd.read_csv(INDEX_TABLE))
+    law = compile_law(
+        CONFIG_ROOT, (2026,), index_table, alternative=alternative, lint=False
+    )
+    assert by_status(law, "char.nonitem_limit", 2026) == {1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0}

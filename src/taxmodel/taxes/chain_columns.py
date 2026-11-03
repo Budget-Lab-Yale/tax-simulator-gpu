@@ -53,6 +53,7 @@ ONE_1040_COLUMNS = (
     "senior_ded",
     "item_ded_limited",
     "itemizing",
+    "char_nonitem_ded",
     "ded",
     "txbl_inc",
     "liab_ord",

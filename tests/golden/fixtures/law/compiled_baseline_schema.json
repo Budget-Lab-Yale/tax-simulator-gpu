@@ -808,6 +808,19 @@
       "padding": "nan"
     },
     {
+      "name": "char.nonitem_limit",
+      "parameter": "char",
+      "subparameter": "nonitem_limit",
+      "dtype": "float64",
+      "units": "dollars",
+      "slots_used": 1,
+      "varies_by_filing_status": true,
+      "indexed": false,
+      "from_mapper": true,
+      "differentiable": true,
+      "padding": "nan"
+    },
+    {
       "name": "corp.rate",
       "parameter": "corp",
       "subparameter": "rate",

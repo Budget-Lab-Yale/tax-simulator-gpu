@@ -15,6 +15,7 @@ class TaxableIncomeLaw:
     item_limit_tax_value_thresh: Array
     item_salt_limit_tax_value_rate: Array
     item_limit_tax_value_rate: Array
+    char_nonitem_limit: Array
 
 
 def calc_txbl_inc(records: Mapping[str, Array], law: TaxableIncomeLaw) -> dict[str, Array]:
@@ -46,13 +47,26 @@ def calc_txbl_inc(records: Mapping[str, Array], law: TaxableIncomeLaw) -> dict[s
         - salt_excess * law.item_salt_limit_tax_value_rate
         - other_excess * law.item_limit_tax_value_rate
     )
-    # The itemizing flag is set only when the post-clawback itemized value is
-    # strictly greater. The deduction taken is the same number either way when
+    # A filer who does not itemize may deduct cash gifts to charity up to a
+    # dollar limit (IRC 170(p), taken below the line under 63(b)(4)). A gift
+    # already deducted above the line is not deducted again. The floor and the
+    # cap here are on gifts, which do not move with income, so they stay on the
+    # default spelling.
+    char_nonitem = capped_at(
+        floored_at(records["char_cash"] - records["char_above_ded"], 0.0),
+        law.char_nonitem_limit,
+    )
+    # The filer itemizes when the post-clawback itemized value is strictly
+    # greater than the standard deduction plus the charitable deduction it
+    # would give up. The deduction taken is the same number either way when
     # the two are equal, so the floor below is written to take the itemized
     # slope at a tie.
-    itemizing = item_limited > records["std_ded"]
-    deduction = floored_at(item_limited, records["std_ded"])
-    # The senior deduction is reported inside `ded` for a non-itemizer and
+    not_itemizing_total = records["std_ded"] + char_nonitem
+    itemizing = item_limited > not_itemizing_total
+    deduction = floored_at(item_limited, not_itemizing_total)
+    char_nonitem_ded = jnp.where(itemizing, 0.0, char_nonitem)
+    # The non-itemizer's charitable deduction and the senior deduction are
+    # reported inside `ded` for a non-itemizer; the senior deduction is
     # subtracted separately for an itemizer. Taxable income is the same
     # either way.
     senior_for_taxable_income = jnp.where(itemizing, records["senior_ded"], 0.0)
@@ -67,4 +81,10 @@ def calc_txbl_inc(records: Mapping[str, Array], law: TaxableIncomeLaw) -> dict[s
         - senior_for_taxable_income,
         0.0,
     )
-    return {"item_ded_limited": item_limited, "itemizing": itemizing, "ded": deduction, "txbl_inc": taxable_income}
+    return {
+        "item_ded_limited": item_limited,
+        "itemizing": itemizing,
+        "char_nonitem_ded": char_nonitem_ded,
+        "ded": deduction,
+        "txbl_inc": taxable_income,
+    }

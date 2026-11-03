@@ -248,14 +248,17 @@ def test_a_refundable_credit_makes_a_nonfiler_a_filer():
 def both_charitable_forms(law):
     """The law, with a charitable deduction available in both places.
 
-    Under 2027 law the above-the-line charitable deduction is capped at
-    $1,000, and Schedule A has no separate dollar cap, so the double run is
-    live. Setting both explicitly keeps the test independent of the year.
+    The above-the-line charitable deduction is capped at $1,000 and Schedule
+    A has no separate dollar cap, so the double run is live. The deduction for
+    filers who do not itemize, which 2027 law has, is set to zero, so that the
+    itemized leg offers only Schedule A. Setting all three explicitly keeps the
+    test independent of the year.
     """
     return replace(
         law,
         agi=replace(law.agi, char_above_limit=jnp.asarray(1_000.0)),
         item_ded=replace(law.item_ded, char_limit=jnp.asarray(jnp.inf)),
+        txbl_inc=replace(law.txbl_inc, char_nonitem_limit=jnp.asarray(0.0)),
     )
 
 
@@ -264,6 +267,7 @@ def only_the_itemized_form(law):
         law,
         agi=replace(law.agi, char_above_limit=jnp.asarray(0.0)),
         item_ded=replace(law.item_ded, char_limit=jnp.asarray(jnp.inf)),
+        txbl_inc=replace(law.txbl_inc, char_nonitem_limit=jnp.asarray(0.0)),
     )
 
 

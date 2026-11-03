@@ -165,6 +165,7 @@ FORM_1040_VARIABLES: tuple[str, ...] = (
     "tip_ded",
     "ot_ded",
     "senior_ded",
+    "char_nonitem_ded",
     # Taxable income and tax before credits
     "txbl_inc",
     "liab_ord",

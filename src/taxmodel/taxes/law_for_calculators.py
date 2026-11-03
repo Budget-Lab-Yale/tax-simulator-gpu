@@ -205,6 +205,7 @@ TAXABLE_INCOME = {
     "item_limit_tax_value_thresh": Ref("item.limit_tax_value_thresh"),
     "item_salt_limit_tax_value_rate": Ref("item.salt_limit_tax_value_rate"),
     "item_limit_tax_value_rate": Ref("item.limit_tax_value_rate"),
+    "char_nonitem_limit": Ref("char.nonitem_limit"),
 }
 
 TAX = {

@@ -29,11 +29,11 @@ Every field is a `float64` array indexed `[year, filing_status, slot]`, shaped `
 
 ## Totals
 
-- Fields: 246
-- Differentiable fields: 186
+- Fields: 247
+- Differentiable fields: 187
 - Indexed fields: 43
-- Built by a filing-status mapper: 57
-- By units: calendar year 2, count 10, dollars 117, indicator 43, rate 63, ratio 1, regime code 5, share of AGI 5
+- Built by a filing-status mapper: 58
+- By units: calendar year 2, count 10, dollars 118, indicator 43, rate 63, ratio 1, regime code 5, share of AGI 5
 
 
 ## `agi`
@@ -130,6 +130,7 @@ Every field is a `float64` array indexed `[year, filing_status, slot]`, shaped `
 | `char.item_floor_agi` | share of AGI | 1 |  |  |  | yes |
 | `char.item_limit` | dollars | 1 |  |  |  | yes |
 | `char.item_noncash_limit_agi` | share of AGI | 1 |  |  |  | yes |
+| `char.nonitem_limit` | dollars | 1 | yes |  | yes | yes |
 
 ## `corp`
 
