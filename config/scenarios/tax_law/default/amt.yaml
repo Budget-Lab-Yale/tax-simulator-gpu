@@ -26,7 +26,8 @@ filing_status_mapper:
     '3': brackets_single / 2
     '4': brackets_single
 
-# Whether exemptions are a preference item (i.e. added back from taxable income)
+# Whether the deductions under section 151, the personal exemption and the
+# senior deduction, are added back in computing AMT income (IRC 56(b)(1)(D))
 pe_pref:
   value: 1
 

@@ -140,6 +140,62 @@ def test_amt_swaps_only_ordinary_schedule_and_nets_regular_liability():
     np.testing.assert_allclose(result["liab_bc"], [4_700.0])
 
 
+def _amt_with_senior_deduction(pe_pref):
+    """AMT gross income for a non-itemizer and an itemizer, each with $100,000
+    of AGI and a $6,000 senior deduction."""
+    records = {
+        "agi": jnp.array([100_000.0, 100_000.0]),
+        # The non-itemizer's `ded` is the $15,000 standard deduction plus the
+        # senior deduction; the itemizer's is $30,000 of itemized deductions,
+        # with the senior deduction taken separately.
+        "ded": jnp.array([21_000.0, 30_000.0]),
+        "senior_ded": jnp.array([6_000.0, 6_000.0]),
+        "std_ded": jnp.array([15_000.0, 0.0]),
+        "itemizing": jnp.array([False, True]),
+        "item_ded": jnp.array([0.0, 30_000.0]),
+        "item_ded_ex_limits": jnp.array([0.0, 30_000.0]),
+        "pe_ded": jnp.zeros(2),
+        "qbi_ded": jnp.zeros(2),
+        "tip_ded": jnp.zeros(2),
+        "ot_ded": jnp.zeros(2),
+        "salt_item_ded": jnp.zeros(2),
+        "misc_item_ded": jnp.zeros(2),
+        "state_ref": jnp.zeros(2),
+        "amt_nols": jnp.zeros(2),
+        "amt_ftc": jnp.zeros(2),
+        "liab": jnp.zeros(2),
+        "excess_ptc": jnp.zeros(2),
+        "div_pref": jnp.zeros(2),
+        "kg_pref": jnp.zeros(2),
+        "kg_1250": jnp.zeros(2),
+        "kg_collect": jnp.zeros(2),
+    }
+    law = AmtLaw(
+        pe_pref=pe_pref,
+        exempt=0.0,
+        exempt_po_thresh=1e9,
+        exempt_po_rate=0.0,
+        rates=jnp.array([0.20]),
+        brackets=jnp.array([0.0]),
+    )
+    return calc_amt(records, TAX_LAW, law)["amt_gross_inc"]
+
+
+def test_amt_adds_back_the_senior_deduction_with_the_personal_exemption():
+    # Under current law (pe_pref of 1) the senior deduction, a section 151
+    # deduction, is not allowed against the AMT (IRC 56(b)(1)(D)). The
+    # non-itemizer's AMT income is the whole $100,000 of AGI: the standard
+    # deduction and the senior deduction are both added back. The itemizer's
+    # is AGI less the $30,000 of itemized deductions.
+    np.testing.assert_allclose(_amt_with_senior_deduction(1.0), [100_000.0, 70_000.0])
+
+
+def test_amt_subtracts_the_senior_deduction_once_where_section_151_is_allowed():
+    # With section 151 deductions allowed against the AMT (pe_pref of 0), the
+    # senior deduction comes off once for itemizer and non-itemizer alike.
+    np.testing.assert_allclose(_amt_with_senior_deduction(0.0), [94_000.0, 64_000.0])
+
+
 # An invented three-bracket preferential schedule whose top bracket starts at
 # $50,000, padded with NaN as the compiled law is. The ordinary-tax cap is off so
 # that the preferential tax is charged in full.

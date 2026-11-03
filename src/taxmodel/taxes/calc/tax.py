@@ -218,14 +218,20 @@ def calc_amt(
         - (records["item_ded_ex_limits"] - records["item_ded"]),
         records["std_ded"],
     )
+    # The senior deduction is a deduction under section 151 (IRC
+    # 151(d)(5)(C)), which the AMT disallows along with the personal
+    # exemption (IRC 56(b)(1)(D)); `pe_pref` governs both. A non-itemizer's
+    # `ded` includes the senior deduction, so it is taken out of `ded` here,
+    # and the senior deduction is subtracted once, only where the law allows
+    # section 151 deductions against the AMT.
+    senior_in_ded = jnp.where(records["itemizing"], 0.0, records["senior_ded"])
     amt_gross_inc = (
         records["agi"]
-        - records["ded"]
-        - records["pe_ded"] * (law.pe_pref == 0)
+        - (records["ded"] - senior_in_ded)
+        - (records["pe_ded"] + records["senior_ded"]) * (law.pe_pref == 0)
         - records["qbi_ded"]
         - records["tip_ded"]
         - records["ot_ded"]
-        - records["senior_ded"]
         + addback
         - records["state_ref"]
         + records["amt_nols"]
