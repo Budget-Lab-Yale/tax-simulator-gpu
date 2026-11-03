@@ -100,3 +100,33 @@ def test_the_residential_energy_credits_end_after_2025(default_law):
     service, or expenditures made, after 31 December 2025."""
     assert by_status(default_law, "credits.repeal_res_energy", 2025) == {1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0}
     assert by_status(default_law, "credits.repeal_res_energy", 2026) == {1: 1.0, 2: 1.0, 3: 1.0, 4: 1.0}
+
+
+def test_the_savers_credit_for_retirement_contributions_ends_after_2026(default_law):
+    """IRC 25B(d)(1)(B) as amended by SECURE 2.0 sec. 103 and OBBBA sec. 70116:
+    contributions to retirement plans and IRAs count only in taxable years
+    beginning before 1 January 2027."""
+    assert by_status(default_law, "savers.repeal", 2026) == {1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0}
+    assert by_status(default_law, "savers.repeal", 2027) == {1: 1.0, 2: 1.0, 3: 1.0, 4: 1.0}
+
+
+@pytest.mark.parametrize(
+    "alternative, repealed",
+    [
+        ("baseline_2024", 1.0),
+        ("baseline_2024_pre_obbba", 1.0),
+        ("baseline_2024_tcja_ext", 1.0),
+        ("tests/booker_ctc_tcja_ext", 1.0),
+        ("tests/baseline_2017", 0.0),
+        ("tests/tcja_2017", 0.0),
+    ],
+)
+def test_the_savers_credit_ends_in_2024_law_and_not_in_2017_law(alternative, repealed):
+    """SECURE 2.0 was enacted in December 2022, so 2024 law ends the credit
+    for retirement contributions after 2026 and 2017 law does not."""
+    index_table = index_table_from_frame(pd.read_csv(INDEX_TABLE))
+    # Lint is off for the reason given in the charitable test above.
+    law = compile_law(
+        CONFIG_ROOT, (2027,), index_table, alternative=alternative, lint=False
+    )
+    assert by_status(law, "savers.repeal", 2027) == dict.fromkeys(FILING_STATUSES, repealed)
