@@ -9,3 +9,9 @@ salt_limit_married:
     '2028': 0
     '2029': 0
     '2030': 0
+
+# The $10,000 floor under the phased-down cap (IRC 164(b)(7)(B)(iii), added by
+# OBBBA sec. 70120) is repealed too; a zero cap alone leaves the floor in force
+# in 2025-2029.
+salt_floor:
+  value: 0

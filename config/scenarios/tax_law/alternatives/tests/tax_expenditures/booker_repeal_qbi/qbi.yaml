@@ -3,3 +3,9 @@ rate:
   value:
     '2014': 0
     '2018': 0
+
+# The minimum deduction of $400 from 2026 (IRC 199A(i) as added by OBBBA sec.
+# 70105) is repealed too.
+min_value:
+  value: 0
+  remove_indexation: true
