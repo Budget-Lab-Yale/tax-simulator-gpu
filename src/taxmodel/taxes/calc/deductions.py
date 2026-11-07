@@ -85,6 +85,7 @@ class QbiLaw:
     txbl_inc_limit: Array
     po_type: Array
     min_value: Array
+    char_nonitem_limit: Array
 
 
 @dataclass(frozen=True)
@@ -355,10 +356,15 @@ def calc_qbi_ded(records: Mapping[str, Array], law: QbiLaw) -> dict[str, Array]:
     # larger of the standard and itemized deductions, before calc_txbl_inc
     # chooses a deduction, and the tip, overtime, senior and car loan interest
     # deductions, which every filer takes (Form 8995 line 11: Form 1040 line
-    # 11a less lines 12e and 13b).
+    # 11a less lines 12e and 13b). A filer who does not itemize also subtracts
+    # the charitable deduction of IRC 170(p).
+    char_nonitem = capped_at(
+        floored_at(records["char_cash"] - records["char_above_ded"], 0.0),
+        law.char_nonitem_limit,
+    )
     txbl_inc = floored_at(
         records["agi"]
-        - floored_at(records["item_ded"], records["std_ded"])
+        - floored_at(records["item_ded"], records["std_ded"] + char_nonitem)
         - records["pe_ded"]
         - records["tip_ded"]
         - records["ot_ded"]

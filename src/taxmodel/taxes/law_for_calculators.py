@@ -175,6 +175,7 @@ QBI = {
     "txbl_inc_limit": Ref("qbi.txbl_inc_limit"),
     "po_type": Ref("qbi.po_type"),
     "min_value": Ref("qbi.min_value"),
+    "char_nonitem_limit": Ref("char.nonitem_limit"),
 }
 
 BELOW_DEDUCTION = {
