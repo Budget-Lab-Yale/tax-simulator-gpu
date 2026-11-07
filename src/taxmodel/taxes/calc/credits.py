@@ -464,9 +464,10 @@ def calc_ctc(records: Mapping[str, Array], law: CtcLaw) -> dict[str, Array]:
     # Under a rate phase-out, IRC 24(b)(1) reduces the total credit once. The
     # reduction comes off the other-dependent credit first and what is left comes
     # off the first child credit, which keeps as much of the total as possible
-    # refundable, as Schedule 8812 does.
+    # refundable, as Schedule 8812 does. A reform that gives the two credits
+    # different rates phases each out separately.
     reduction_on_child_credit = jnp.where(
-        law.po_type == 1,
+        (law.po_type == 1) & (law.po_rate_other == law.po_rate1),
         floored_at(reduction1 - (maximum_other - value_other), 0.0),
         reduction1,
     )
