@@ -487,9 +487,12 @@ def calc_below_ded(
         po_range=law.ot_ded_po_range,
         po_thresh=law.ot_ded_po_thresh,
     )
-    seniors = (records["age1"] >= 65).astype(jnp.int64) + (
-        (~jnp.isnan(records["age2"])) & (records["age2"] >= 65)
-    ).astype(jnp.int64)
+    # A married person must file jointly to claim the senior deduction (IRC
+    # 151(d)(5)(C)).
+    seniors = (
+        (records["age1"] >= 65).astype(jnp.int64)
+        + ((~jnp.isnan(records["age2"])) & (records["age2"] >= 65)).astype(jnp.int64)
+    ) * (records["filing_status"] != 3)
     # The senior amount stacks for each qualifying spouse and phases out per
     # qualifying person under the model's stated rate.
     senior = phased_out(
