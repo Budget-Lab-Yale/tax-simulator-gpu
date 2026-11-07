@@ -165,6 +165,7 @@ def _ctc_law():
         pi_type=1.0,
         pi_rate=0.2,
         pi_range=jnp.inf,
+        ss_alt_min_children=3.0,
         baby_bonus_in_credit=1.0,
         baby_bonus=0.0,
         baby_bonus_pi_rate=0.0,
@@ -197,6 +198,8 @@ def test_ctc_nonrefundable_then_refundable_ladder():
         "ei": jnp.array([10_000.0]),
         "ei_prior_yr": jnp.zeros(1),
         "filer": jnp.ones(1),
+        "liab_pr_ee": jnp.array([765.0]),
+        "eitc": jnp.zeros(1),
     }
     result = calc_ctc(records, _ctc_law())
 

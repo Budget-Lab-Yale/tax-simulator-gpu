@@ -130,3 +130,31 @@ def test_the_savers_credit_ends_in_2024_law_and_not_in_2017_law(alternative, rep
         CONFIG_ROOT, (2027,), index_table, alternative=alternative, lint=False
     )
     assert by_status(law, "savers.repeal", 2027) == dict.fromkeys(FILING_STATUSES, repealed)
+
+
+def test_the_additional_standard_deduction_for_a_separate_filer_is_the_married_amount(default_law):
+    """IRC 63(f); Rev. Proc. 2024-40: $1,600 married, $2,000 unmarried, in 2025."""
+    assert by_status(default_law, "std.bonus", 2025) == {
+        1: 2_000.0,
+        2: 1_600.0,
+        3: 1_600.0,
+        4: 2_000.0,
+    }
+
+
+def test_the_salt_phase_down_rate_of_a_separate_filer_is_half(default_law):
+    """2025 Schedule A, line 5e worksheet: the limit is halved after the 30% reduction."""
+    assert by_status(default_law, "item.salt_po_rate", 2025) == {
+        1: 0.30,
+        2: 0.30,
+        3: 0.15,
+        4: 0.30,
+    }
+
+
+def test_the_childless_eitc_phase_out_threshold_is_indexed(default_law):
+    """Rev. Proc. 2023-34: $10,330 single and $17,250 joint in 2024. The golden index
+    table carries the preliminary 2016 chained CPI, which can leave these $10 high."""
+    amounts = by_status(default_law, "eitc.po_thresh_0", 2024)
+    assert amounts[1] == pytest.approx(10_330.0, abs=10.0)
+    assert amounts[2] == pytest.approx(17_250.0, abs=10.0)

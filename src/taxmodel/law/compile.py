@@ -39,7 +39,12 @@ import numpy as np
 from ..config.law_layers import Replacement, ResolvedLaw, resolve_law
 from . import mappers
 from .errors import LawError
-from .indexation import IndexTable, apply_indexation, indexed_before_rounding, index_ratios
+from .indexation import (
+    IndexTable,
+    apply_indexation,
+    index_ratios,
+    indexed_before_rounding,
+)
 from .lint import check_law, check_schedules
 from .parse import (
     ParsedSubparameter,
