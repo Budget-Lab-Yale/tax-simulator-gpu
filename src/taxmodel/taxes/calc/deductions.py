@@ -111,6 +111,9 @@ class BelowDeductionLaw:
     auto_int_ded_po_thresh: Array
     auto_int_ded_po_rate: Array
     auto_int_ded_new: Array
+    tip_ded_mfs_eligible: Array
+    ot_ded_mfs_eligible: Array
+    senior_ded_mfs_eligible: Array
 
 
 # The share of car loans that finance a new car (Experian, State of the
@@ -521,7 +524,7 @@ def calc_below_ded(
     """Return the tip, overtime, senior and car loan interest deductions below AGI."""
     # A married person must file jointly to claim the tip and overtime
     # deductions (IRC 224 and 225).
-    joint_if_married = records["filing_status"] != 3
+    separate = records["filing_status"] == 3
     # Tips and overtime are unavailable once an earner's own wages exceed the
     # applicable eligibility limit; a joint return evaluates each earner alone.
     # The limit is tested against the earner's whole pay, tips and overtime
@@ -559,7 +562,7 @@ def calc_below_ded(
     seniors = (
         (records["age1"] >= 65).astype(jnp.int64)
         + ((~jnp.isnan(records["age2"])) & (records["age2"] >= 65)).astype(jnp.int64)
-    ) * (records["filing_status"] != 3)
+    ) * (~separate | (law.senior_ded_mfs_eligible == 1))
     # The senior amount stacks for each qualifying spouse and phases out per
     # qualifying person under the model's stated rate.
     senior = phased_out(
@@ -580,8 +583,8 @@ def calc_below_ded(
         records["r.new_car"] < NEW_CAR_FINANCING_SHARE
     )
     return {
-        "tip_ded": tip * joint_if_married,
-        "ot_ded": ot * joint_if_married,
+        "tip_ded": tip * (~separate | (law.tip_ded_mfs_eligible == 1)),
+        "ot_ded": ot * (~separate | (law.ot_ded_mfs_eligible == 1)),
         "senior_ded": senior,
         "auto_int_ded": auto_int,
     }

@@ -196,6 +196,9 @@ BELOW_DEDUCTION = {
     "senior_ded_value": Ref("below.senior_ded_value"),
     "senior_ded_po_thresh": Ref("below.senior_ded_po_thresh"),
     "senior_ded_po_rate": Ref("below.senior_ded_po_rate"),
+    "tip_ded_mfs_eligible": Ref("below.tip_ded_mfs_eligible"),
+    "ot_ded_mfs_eligible": Ref("below.ot_ded_mfs_eligible"),
+    "senior_ded_mfs_eligible": Ref("below.senior_ded_mfs_eligible"),
     # The car loan interest parameters keep their `agi.` names, which reforms
     # and the auto-interest behavioral module refer to.
     "auto_int_ded_limit": Ref("agi.auto_int_ded_limit"),
