@@ -239,6 +239,21 @@ def calc_amt(
         - records["state_ref"]
         + records["amt_nols"]
     )
+    # A married person filing separately adds the phase-out rate times the excess
+    # over the income at which the exemption reaches zero, up to the exemption
+    # amount (IRC 55(d)(2); Form 6251 line 4). Under IRC 55(d)(4)(A)(ii)(IV) the
+    # rate is 50 percent from 2026.
+    rate_is_positive = law.exempt_po_rate > 0.0
+    income_at_no_exemption = jnp.where(
+        rate_is_positive,
+        law.exempt_po_thresh
+        + law.exempt / jnp.where(rate_is_positive, law.exempt_po_rate, 1.0),
+        jnp.inf,
+    )
+    amt_gross_inc = amt_gross_inc + (records["filing_status"] == 3) * capped_at(
+        law.exempt_po_rate * floored_at(amt_gross_inc - income_at_no_exemption, 0.0),
+        law.exempt,
+    )
     # The AMT exemption phases out from AMT gross income before the alternative
     # ordinary schedule is applied.
     exemption = phased_out(
