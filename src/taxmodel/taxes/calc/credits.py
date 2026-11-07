@@ -544,6 +544,11 @@ def calc_ctc(records: Mapping[str, Array], law: CtcLaw) -> dict[str, Array]:
         floored_at(records["liab_pr_ee"] - records["eitc"], 0.0),
         0.0,
     )
+    # At zero earnings the two are often both zero, and the larger has no single
+    # more-income side. The tie takes the earned income formula, whose slope
+    # there is zero below the phase-in threshold. The payroll alternative's
+    # slope is the payroll rate less the EITC phase-in rate, which is negative
+    # for a family that can claim the EITC, the common case.
     ctc_ref = capped_at(
         floored_at(phase_in_amount, payroll_alternative),
         capped_at(remaining_ctc, maximum_refund_young + maximum_refund_old),
