@@ -451,15 +451,30 @@ def calc_ctc(records: Mapping[str, Array], law: CtcLaw) -> dict[str, Array]:
     rate_other = jnp.where(
         law.po_type == 1, law.po_rate_other, maximum_other / law.po_range_other
     )
+    reduction1 = excess1 * rate1
     combined_after_first = floored_at(
-        maximum1 + maximum2 - excess1 * rate1, 0.0, sinks_against_the_limit=True
+        maximum1 + maximum2 - reduction1, 0.0, sinks_against_the_limit=True
+    )
+    value_other = jnp.where(
+        law.po_sequential == 1,
+        floored_at(maximum_other - excess2 * rate_other, 0.0, sinks_against_the_limit=True),
+        floored_at(maximum_other - excess1 * rate_other, 0.0, sinks_against_the_limit=True),
+    )
+    # Under a rate phase-out, IRC 24(b)(1) reduces the total credit once. The
+    # reduction comes off the other-dependent credit first and what is left comes
+    # off the first child credit, which keeps as much of the total as possible
+    # refundable, as Schedule 8812 does.
+    reduction_on_child_credit = jnp.where(
+        law.po_type == 1,
+        floored_at(reduction1 - (maximum_other - value_other), 0.0),
+        reduction1,
     )
     # Sequential phaseout uses the first reduction against the combined child
     # credit, then assigns the residual between the two child-credit layers.
     value1 = jnp.where(
         law.po_sequential == 1,
         combined_after_first,
-        floored_at(maximum1 - excess1 * rate1, 0.0, sinks_against_the_limit=True),
+        floored_at(maximum1 - reduction_on_child_credit, 0.0, sinks_against_the_limit=True),
     )
     value2 = jnp.where(
         law.po_sequential == 1,
@@ -467,11 +482,6 @@ def calc_ctc(records: Mapping[str, Array], law: CtcLaw) -> dict[str, Array]:
         floored_at(maximum2 - excess2 * rate2, 0.0, sinks_against_the_limit=True),
     )
     value1 = jnp.where(law.po_sequential == 1, value1 - value2, value1)
-    value_other = jnp.where(
-        law.po_sequential == 1,
-        floored_at(maximum_other - excess2 * rate_other, 0.0, sinks_against_the_limit=True),
-        floored_at(maximum_other - excess1 * rate_other, 0.0, sinks_against_the_limit=True),
-    )
     filing_eligible = (records["filing_status"] != 3) | (law.mfs_eligible == 1)
     value1 *= filing_eligible
     value2 *= filing_eligible
