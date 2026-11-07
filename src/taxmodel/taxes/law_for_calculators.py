@@ -345,6 +345,7 @@ CTC = {
     "pi_type": Ref("ctc.pi_type"),
     "pi_rate": Ref("ctc.pi_rate"),
     "pi_range": Ref("ctc.pi_range"),
+    "ss_alt_min_children": Ref("ctc.ss_alt_min_children"),
     "baby_bonus_in_credit": Ref("ctc.baby_bonus_in_credit"),
     "baby_bonus": Ref("ctc.baby_bonus"),
     "baby_bonus_pi_rate": Ref("ctc.baby_bonus_pi_rate"),

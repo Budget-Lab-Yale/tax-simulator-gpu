@@ -111,6 +111,7 @@ class CtcLaw:
     pi_type: Array
     pi_rate: Array
     pi_range: Array
+    ss_alt_min_children: Array
     baby_bonus_in_credit: Array
     baby_bonus: Array
     baby_bonus_pi_rate: Array
@@ -530,9 +531,20 @@ def calc_ctc(records: Mapping[str, Array], law: CtcLaw) -> dict[str, Array]:
     phase_in_rate = jnp.where(
         law.pi_type == 1, law.pi_rate, (maximum1 + maximum2) / law.pi_range
     )
-    ctc_ref = capped_at(
+    phase_in_amount = (
         minimum_refund
-        + floored_at(qualifying_ei - law.pi_thresh, 0.0) * phase_in_rate,
+        + floored_at(qualifying_ei - law.pi_thresh, 0.0) * phase_in_rate
+    )
+    # Larger families may instead use social security taxes less the EITC (IRC
+    # 24(d)(1)(B)(ii) and 24(d)(2)). `liab_pr_ee` holds the employee's FICA tax,
+    # Additional Medicare tax and half of SECA tax.
+    payroll_alternative = jnp.where(
+        n_young + n_old >= law.ss_alt_min_children,
+        floored_at(records["liab_pr_ee"] - records["eitc"], 0.0),
+        0.0,
+    )
+    ctc_ref = capped_at(
+        floored_at(phase_in_amount, payroll_alternative),
         capped_at(remaining_ctc, maximum_refund_young + maximum_refund_old),
     )
     baby_bonus = capped_at(
