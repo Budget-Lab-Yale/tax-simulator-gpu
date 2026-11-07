@@ -303,18 +303,33 @@ def calc_pe_ded(
     return {"pe_ded": n_pe * law.value * (1 - po_share)}
 
 
-def _seca_deduction_by_business(
+def _deductions_by_business(
     records: Mapping[str, Array],
 ) -> tuple[Array, Array, Array]:
-    """The deduction for half of SECA tax attributable to each kind of business.
+    """The deductions attributable to each kind of business.
 
-    Returns the amounts for sole proprietorships, partnerships and farms. Each
-    earner's deduction is split across that earner's businesses in proportion to
-    positive self-employment earnings. An earner with no such earnings has no
-    deduction, and the deduction on the next dollar is assigned to the
-    sole proprietorship so that the marginal rate on that dollar includes it.
+    Returns the amounts for sole proprietorships, partnerships and farms: half
+    of SECA tax, self-employed health insurance and retirement contributions.
+    Each earner's SECA deduction is split across that earner's businesses in
+    proportion to positive self-employment earnings. An earner with no such
+    earnings has no deduction, and the deduction on the next dollar is assigned
+    to the sole proprietorship so that the marginal rate on that dollar includes
+    it. The other two are tax unit amounts, split across all of the unit's
+    businesses the same way; a unit with no such earnings has no reduction.
     """
     sole_prop, part, farm = 0.0, 0.0, 0.0
+    positive = {
+        name: floored_at(records[f"{name}1"], 0.0) + floored_at(records[f"{name}2"], 0.0)
+        for name in ("sole_prop", "part_se", "farm")
+    }
+    unit_total = positive["sole_prop"] + positive["part_se"] + positive["farm"]
+    unit_has_earnings = unit_total > 0.0
+    unit_amount_per_dollar = jnp.where(
+        unit_has_earnings,
+        (records["se_health"] + records["keogh_contr"])
+        / jnp.where(unit_has_earnings, unit_total, 1.0),
+        0.0,
+    )
     for earner in ("1", "2"):
         earner_sole_prop = floored_at(records[f"sole_prop{earner}"], 0.0)
         earner_part = floored_at(records[f"part_se{earner}"], 0.0)
@@ -326,7 +341,11 @@ def _seca_deduction_by_business(
         sole_prop += deduction * jnp.where(has_earnings, earner_sole_prop / safe_total, 1.0)
         part += deduction * jnp.where(has_earnings, earner_part / safe_total, 0.0)
         farm += deduction * jnp.where(has_earnings, earner_farm / safe_total, 0.0)
-    return sole_prop, part, farm
+    return (
+        sole_prop + positive["sole_prop"] * unit_amount_per_dollar,
+        part + positive["part_se"] * unit_amount_per_dollar,
+        farm + positive["farm"] * unit_amount_per_dollar,
+    )
 
 
 def calc_qbi_ded(records: Mapping[str, Array], law: QbiLaw) -> dict[str, Array]:
@@ -349,15 +368,15 @@ def calc_qbi_ded(records: Mapping[str, Array], law: QbiLaw) -> dict[str, Array]:
     )
     # §199A works on the household's income from each kind of business, so
     # the two earners' sole-proprietorship and farm income are added together.
-    # Qualified business income is net of the deduction for half of SECA tax
-    # (Treas. Reg. 1.199A-3(b)(1)(vi)).
-    seca_sole_prop, seca_part, seca_farm = _seca_deduction_by_business(records)
+    # Qualified business income is net of the deductions attributable to the
+    # business (Treas. Reg. 1.199A-3(b)(1)(vi)).
+    ded_sole_prop, ded_part, ded_farm = _deductions_by_business(records)
     inc = jnp.stack(
         (
-            records["sole_prop1"] + records["sole_prop2"] - seca_sole_prop,
-            records["part"] - seca_part,
+            records["sole_prop1"] + records["sole_prop2"] - ded_sole_prop,
+            records["part"] - ded_part,
             records["scorp"],
-            records["farm1"] + records["farm2"] - seca_farm,
+            records["farm1"] + records["farm2"] - ded_farm,
         ),
         axis=-1,
     )
