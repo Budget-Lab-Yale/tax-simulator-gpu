@@ -604,9 +604,10 @@ def calc_eitc(records: Mapping[str, Array], law: EitcLaw) -> dict[str, Array]:
     )
 
     def credit(ei: Array) -> Array:
-        # The credit phases in on earned income but phases out against the larger
-        # of earned income and AGI, as on the EITC worksheet.
-        maximum = capped_at(ei, pi_end) * pi_rate
+        # The credit is the smaller of the phase-in amount and the maximum credit
+        # less the phase-out amount (IRC 32(a)(2)). It phases in on earned income
+        # and phases out against the larger of earned income and AGI.
+        phase_in_amount = capped_at(ei, pi_end) * pi_rate
         phaseout_income = floored_at(records["agi"], ei)
         # This amount rises with earnings over the phase-in range and falls over
         # the phaseout range, so it hits zero twice and has no single more-income
@@ -615,7 +616,11 @@ def calc_eitc(records: Mapping[str, Array], law: EitcLaw) -> dict[str, Array]:
         # data -- at the cost of still reporting the phaseout rate to a household
         # sitting exactly where the credit runs out, where there are no records.
         return floored_at(
-            maximum - floored_at(phaseout_income - po_thresh, 0.0) * po_rate,
+            capped_at(
+                phase_in_amount,
+                pi_end * pi_rate
+                - floored_at(phaseout_income - po_thresh, 0.0) * po_rate,
+            ),
             0.0,
         )
 
