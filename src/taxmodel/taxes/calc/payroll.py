@@ -129,8 +129,12 @@ def calc_pr(records: Mapping[str, Array], law: PayrollLaw) -> dict[str, Array]:
     liab_pr_ee = _added_up((fica, seca), sides=("ee",)) + liab_add_med
     liab_pr_er = liab_fica_er1 + liab_fica_er2 + liab_seca_er
 
-    # Earned income retains gross Schedule C, farm, and partnership income;
-    # the SECA taxable-share adjustment is limited to payroll-tax liability.
+    # Earned income counts net earnings from self-employment after the deduction
+    # for half of SECA tax (IRC 32(c)(2)(A)(ii)).
+    seca_ded1 = _added_up((seca,), sides=("er",), earners=(1,))
+    seca_ded2 = _added_up((seca,), sides=("er",), earners=(2,))
+    ei1 = wages1 + se1 - seca_ded1
+    ei2 = wages2 + se2 - seca_ded2
     return {
         "gross_wages1": gross_wages1,
         "gross_wages2": gross_wages2,
@@ -138,9 +142,11 @@ def calc_pr(records: Mapping[str, Array], law: PayrollLaw) -> dict[str, Array]:
         "se1": se1,
         "se2": se2,
         "se": se,
-        "ei1": wages1 + se1,
-        "ei2": wages2 + se2,
-        "ei": wages1 + se1 + wages2 + se2,
+        "seca_ded1": seca_ded1,
+        "seca_ded2": seca_ded2,
+        "ei1": ei1,
+        "ei2": ei2,
+        "ei": ei1 + ei2,
         "liab_fica_er1": liab_fica_er1,
         "liab_fica_er2": liab_fica_er2,
         "liab_fica": liab_fica,

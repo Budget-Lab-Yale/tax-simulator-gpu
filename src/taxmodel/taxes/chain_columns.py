@@ -127,6 +127,8 @@ PAYROLL_COLUMNS = (
     "se1",
     "se2",
     "se",
+    "seca_ded1",
+    "seca_ded2",
     "ei1",
     "ei2",
     "ei",
