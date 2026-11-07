@@ -553,8 +553,9 @@ def _eitc_parameter(child_count: Array, values: tuple[Array, ...]) -> Array:
 
 def calc_eitc(records: Mapping[str, Array], law: EitcLaw) -> dict[str, Array]:
     """Return EITC after age, filing-status, investment-income, and precert rules."""
-    # A worker without a qualifying child must satisfy the age test; a joint
-    # return tests each spouse before adding that spouse's earnings.
+    # A worker without a qualifying child must satisfy the age test. A joint
+    # return qualifies if either spouse does, and the credit is then based on
+    # the couple's combined earned income (IRC 32(c)(1)(A)(ii) and 32(c)(2)).
     has_child = records["n_dep_eitc"] > 0
     qualifies1 = has_child | (
         (records["age1"] >= law.min_age) & (records["age1"] <= law.max_age)
@@ -563,8 +564,9 @@ def calc_eitc(records: Mapping[str, Array], law: EitcLaw) -> dict[str, Array]:
         has_child
         | ((records["age2"] >= law.min_age) & (records["age2"] <= law.max_age))
     )
-    earned_income = records["ei1"] * qualifies1 + jnp.where(
-        records["filing_status"] == 2, records["ei2"] * qualifies2, 0.0
+    joint = records["filing_status"] == 2
+    earned_income = (records["ei1"] + jnp.where(joint, records["ei2"], 0.0)) * (
+        qualifies1 | (joint & qualifies2)
     )
     # The dependent flag is compared with zero, so any nonzero value marks a
     # dependent.
