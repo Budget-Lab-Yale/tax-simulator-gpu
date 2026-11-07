@@ -484,6 +484,9 @@ def calc_below_ded(
     records: Mapping[str, Array], law: BelowDeductionLaw
 ) -> dict[str, Array]:
     """Return the tip, overtime, senior and car loan interest deductions below AGI."""
+    # A married person must file jointly to claim the tip and overtime
+    # deductions (IRC 224 and 225).
+    joint_if_married = records["filing_status"] != 3
     # Tips and overtime are unavailable once an earner's own wages exceed the
     # applicable eligibility limit; a joint return evaluates each earner alone.
     # The limit is tested against the earner's whole pay, tips and overtime
@@ -542,8 +545,8 @@ def calc_below_ded(
         records["r.new_car"] < NEW_CAR_FINANCING_SHARE
     )
     return {
-        "tip_ded": tip,
-        "ot_ded": ot,
+        "tip_ded": tip * joint_if_married,
+        "ot_ded": ot * joint_if_married,
         "senior_ded": senior,
         "auto_int_ded": auto_int,
     }
