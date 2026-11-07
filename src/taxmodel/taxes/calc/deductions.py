@@ -303,6 +303,32 @@ def calc_pe_ded(
     return {"pe_ded": n_pe * law.value * (1 - po_share)}
 
 
+def _seca_deduction_by_business(
+    records: Mapping[str, Array],
+) -> tuple[Array, Array, Array]:
+    """The deduction for half of SECA tax attributable to each kind of business.
+
+    Returns the amounts for sole proprietorships, partnerships and farms. Each
+    earner's deduction is split across that earner's businesses in proportion to
+    positive self-employment earnings. An earner with no such earnings has no
+    deduction, and the deduction on the next dollar is assigned to the
+    sole proprietorship so that the marginal rate on that dollar includes it.
+    """
+    sole_prop, part, farm = 0.0, 0.0, 0.0
+    for earner in ("1", "2"):
+        earner_sole_prop = floored_at(records[f"sole_prop{earner}"], 0.0)
+        earner_part = floored_at(records[f"part_se{earner}"], 0.0)
+        earner_farm = floored_at(records[f"farm{earner}"], 0.0)
+        total = earner_sole_prop + earner_part + earner_farm
+        has_earnings = total > 0.0
+        safe_total = jnp.where(has_earnings, total, 1.0)
+        deduction = records[f"seca_ded{earner}"]
+        sole_prop += deduction * jnp.where(has_earnings, earner_sole_prop / safe_total, 1.0)
+        part += deduction * jnp.where(has_earnings, earner_part / safe_total, 0.0)
+        farm += deduction * jnp.where(has_earnings, earner_farm / safe_total, 0.0)
+    return sole_prop, part, farm
+
+
 def calc_qbi_ded(records: Mapping[str, Array], law: QbiLaw) -> dict[str, Array]:
     """The §199A deduction, limited by taxable income before the deduction."""
     # Taxable income before the QBI deduction (IRC 199A(e)(1)) measures both the
@@ -323,12 +349,15 @@ def calc_qbi_ded(records: Mapping[str, Array], law: QbiLaw) -> dict[str, Array]:
     )
     # §199A works on the household's income from each kind of business, so
     # the two earners' sole-proprietorship and farm income are added together.
+    # Qualified business income is net of the deduction for half of SECA tax
+    # (Treas. Reg. 1.199A-3(b)(1)(vi)).
+    seca_sole_prop, seca_part, seca_farm = _seca_deduction_by_business(records)
     inc = jnp.stack(
         (
-            records["sole_prop1"] + records["sole_prop2"],
-            records["part"],
+            records["sole_prop1"] + records["sole_prop2"] - seca_sole_prop,
+            records["part"] - seca_part,
             records["scorp"],
-            records["farm1"] + records["farm2"],
+            records["farm1"] + records["farm2"] - seca_farm,
         ),
         axis=-1,
     )
