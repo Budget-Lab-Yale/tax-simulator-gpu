@@ -39,7 +39,7 @@ import numpy as np
 from ..config.law_layers import Replacement, ResolvedLaw, resolve_law
 from . import mappers
 from .errors import LawError
-from .indexation import IndexTable, apply_indexation, index_ratios
+from .indexation import IndexTable, apply_indexation, indexed_before_rounding, index_ratios
 from .lint import check_law, check_schedules
 from .parse import (
     ParsedSubparameter,
@@ -379,6 +379,18 @@ def _compile_parameter(
             "src/taxmodel/law/compile.py and recompile every frozen fixture."
         )
     operands = {name: _pad(arr, width) for name, arr in resolved_values.items()}
+    for name in set().union(
+        set(),
+        *(
+            mappers.names_read_unrounded(expression)
+            for by_status in mapper.values()
+            for expression in by_status.values()
+        ),
+    ):
+        if name in parsed:
+            operands[name + mappers.UNROUNDED_SUFFIX] = _pad(
+                _unrounded_subparameter(parsed[name], index_table), width
+            )
 
     # A subparameter named in a mapper expression is an input to the mapper and
     # is not emitted as a field of its own.
@@ -472,6 +484,23 @@ def _resolve_subparameter(
         _pad(sub.i_direction, width),
         _pad(sub.i_increment, width),
         sub.label,
+    )
+
+
+def _unrounded_subparameter(
+    sub: ParsedSubparameter, index_table: IndexTable
+) -> np.ndarray:
+    """Base values grown by the index, before rounding, `[year, slot]`."""
+    if not sub.indexed:
+        return sub.base_value.astype(np.float64, copy=True)
+    width = max(
+        sub.base_value.shape[1], sub.i_base_year.shape[1], sub.i_direction.shape[1]
+    )
+    ratio = index_ratios(
+        sub.measure, _pad(sub.i_base_year, width), index_table, sub.years, sub.label
+    )
+    return indexed_before_rounding(
+        _pad(sub.base_value, width), ratio, _pad(sub.i_direction, width)
     )
 
 
