@@ -306,31 +306,40 @@ def calc_pe_ded(
 
 def _deductions_by_business(
     records: Mapping[str, Array],
-) -> tuple[Array, Array, Array]:
+) -> tuple[Array, Array, Array, Array]:
     """The deductions attributable to each kind of business.
 
-    Returns the amounts for sole proprietorships, partnerships and farms: half
-    of SECA tax, self-employed health insurance and retirement contributions.
-    Each earner's SECA deduction is split across that earner's businesses in
-    proportion to positive self-employment earnings. An earner with no such
-    earnings has no deduction, and the deduction on the next dollar is assigned
-    to the sole proprietorship so that the marginal rate on that dollar includes
-    it. The other two are tax unit amounts, split across all of the unit's
-    businesses the same way; a unit with no such earnings has no reduction.
+    Returns the amounts for sole proprietorships, partnerships, S corporations
+    and farms: half of SECA tax, self-employed health insurance and retirement
+    contributions. Each earner's SECA deduction is split across that earner's
+    businesses in proportion to positive self-employment earnings. An earner
+    with no such earnings has no deduction, and the deduction on the next dollar
+    is assigned to the sole proprietorship so that the marginal rate on that
+    dollar includes it. Health insurance is a tax unit amount, split across
+    positive self-employment earnings and positive S corporation income, since
+    a shareholder owning more than 2% deducts it against S corporation wages.
+    Retirement contributions are split across self-employment earnings only. A
+    unit with none of the relevant income has no reduction.
     """
     sole_prop, part, farm = 0.0, 0.0, 0.0
     positive = {
         name: floored_at(records[f"{name}1"], 0.0) + floored_at(records[f"{name}2"], 0.0)
         for name in ("sole_prop", "part_se", "farm")
     }
-    unit_total = positive["sole_prop"] + positive["part_se"] + positive["farm"]
-    unit_has_earnings = unit_total > 0.0
-    unit_amount_per_dollar = jnp.where(
-        unit_has_earnings,
-        (records["se_health"] + records["keogh_contr"])
-        / jnp.where(unit_has_earnings, unit_total, 1.0),
+    positive_scorp = floored_at(records["scorp"], 0.0)
+    se_total = positive["sole_prop"] + positive["part_se"] + positive["farm"]
+    health_total = se_total + positive_scorp
+    has_se = se_total > 0.0
+    has_health_base = health_total > 0.0
+    retirement_per_dollar = jnp.where(
+        has_se, records["keogh_contr"] / jnp.where(has_se, se_total, 1.0), 0.0
+    )
+    health_per_dollar = jnp.where(
+        has_health_base,
+        records["se_health"] / jnp.where(has_health_base, health_total, 1.0),
         0.0,
     )
+    unit_amount_per_dollar = retirement_per_dollar + health_per_dollar
     for earner in ("1", "2"):
         earner_sole_prop = floored_at(records[f"sole_prop{earner}"], 0.0)
         earner_part = floored_at(records[f"part_se{earner}"], 0.0)
@@ -345,6 +354,7 @@ def _deductions_by_business(
     return (
         sole_prop + positive["sole_prop"] * unit_amount_per_dollar,
         part + positive["part_se"] * unit_amount_per_dollar,
+        positive_scorp * health_per_dollar,
         farm + positive["farm"] * unit_amount_per_dollar,
     )
 
@@ -376,12 +386,12 @@ def calc_qbi_ded(records: Mapping[str, Array], law: QbiLaw) -> dict[str, Array]:
     # the two earners' sole-proprietorship and farm income are added together.
     # Qualified business income is net of the deductions attributable to the
     # business (Treas. Reg. 1.199A-3(b)(1)(vi)).
-    ded_sole_prop, ded_part, ded_farm = _deductions_by_business(records)
+    ded_sole_prop, ded_part, ded_scorp, ded_farm = _deductions_by_business(records)
     inc = jnp.stack(
         (
             records["sole_prop1"] + records["sole_prop2"] - ded_sole_prop,
             records["part"] - ded_part,
-            records["scorp"],
+            records["scorp"] - ded_scorp,
             records["farm1"] + records["farm2"] - ded_farm,
         ),
         axis=-1,
