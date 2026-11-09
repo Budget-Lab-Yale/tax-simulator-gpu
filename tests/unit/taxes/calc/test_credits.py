@@ -1,3 +1,5 @@
+import dataclasses
+
 import jax.numpy as jnp
 import numpy as np
 
@@ -270,6 +272,35 @@ def test_eitc_investment_income_cliff_and_batch_vectorization():
         ]
     )
     np.testing.assert_allclose(actual, expected)
+
+
+def test_eitc_prior_year_election_needs_eligibility_not_current_earnings():
+    law = dataclasses.replace(_eitc_law(), ei_prior_yr=1.0)
+    records = {
+        "dep_status": jnp.array([False, True, False]),
+        "filing_status": jnp.array([1, 1, 1]),
+        "n_dep_eitc": jnp.array([1, 1, 1]),
+        "age1": jnp.array([30.0, 30.0, 30.0]),
+        "age2": jnp.array([jnp.nan, jnp.nan, jnp.nan]),
+        "ei1": jnp.zeros(3),
+        "ei2": jnp.zeros(3),
+        "txbl_int": jnp.array([0.0, 0.0, 1_001.0]),
+        "exempt_int": jnp.zeros(3),
+        "div_ord": jnp.zeros(3),
+        "div_pref": jnp.zeros(3),
+        "txbl_kg": jnp.zeros(3),
+        "net_rent": jnp.zeros(3),
+        "net_estate": jnp.zeros(3),
+        "r.eitc_precert": jnp.ones(3),
+        "agi": jnp.array([0.0, 0.0, 1_001.0]),
+        "ei_prior_yr": jnp.full(3, 10_000.0),
+    }
+    actual = calc_eitc(records, law)["eitc"]
+
+    # With no current-year earnings, an eligible filer elects $10,000 of
+    # prior-year earnings for the $4,000 maximum. A dependent filer and a filer
+    # over the investment income limit get nothing.
+    np.testing.assert_allclose(actual, [4_000.0, 0.0, 0.0])
 
 
 def test_rebate_counts_adults_and_qualified_dependents_then_phases_out():

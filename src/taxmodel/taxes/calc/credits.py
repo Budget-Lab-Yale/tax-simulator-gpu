@@ -593,13 +593,12 @@ def calc_eitc(records: Mapping[str, Array], law: EitcLaw) -> dict[str, Array]:
         | ((records["age2"] >= law.min_age) & (records["age2"] <= law.max_age))
     )
     joint = records["filing_status"] == 2
-    earned_income = (records["ei1"] + jnp.where(joint, records["ei2"], 0.0)) * (
-        qualifies1 | (joint & qualifies2)
-    )
     # The dependent flag is compared with zero, so any nonzero value marks a
     # dependent.
-    earned_income *= (records["dep_status"] == 0) & (
-        (law.mfs_eligible == 1) | (records["filing_status"] != 3)
+    eligible = (
+        (qualifies1 | (joint & qualifies2))
+        & (records["dep_status"] == 0)
+        & ((law.mfs_eligible == 1) | (records["filing_status"] != 3))
     )
     investment_income = (
         records["txbl_int"]
@@ -613,7 +612,10 @@ def calc_eitc(records: Mapping[str, Array], law: EitcLaw) -> dict[str, Array]:
     )
     # Eligibility survives exactly at the investment-income limit and is lost
     # immediately above it.
-    earned_income *= investment_income <= law.inv_inc_limit
+    eligible = eligible & (investment_income <= law.inv_inc_limit)
+    earned_income = (
+        records["ei1"] + jnp.where(joint, records["ei2"], 0.0)
+    ) * eligible
     n_children = records["n_dep_eitc"]
     # Each child-count schedule has its own phase-in rate, plateau endpoint, and
     # phaseout threshold.
@@ -653,7 +655,9 @@ def calc_eitc(records: Mapping[str, Array], law: EitcLaw) -> dict[str, Array]:
         )
 
     eitc = credit(earned_income)
-    prior_eitc = credit(records["ei_prior_yr"] * (earned_income > 0))
+    # An eligible filer may elect prior-year earned income with no current-year
+    # earned income, as under the 2021 election (ARPA sec. 9626).
+    prior_eitc = credit(records["ei_prior_yr"] * eligible)
     eitc = jnp.where(law.ei_prior_yr == 1, floored_at(eitc, prior_eitc), eitc)
     # The 3.1% denial draw implements the parent-precertification score.
     denied_by_precert = (
