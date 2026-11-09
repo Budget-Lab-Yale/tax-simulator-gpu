@@ -3,7 +3,9 @@ indexation_defaults:
   i_measure:
     '1986': cpi
     '2017': chained_cpi
-  i_base_year: [1992, 1992, 2012]
+  i_base_year:
+    '2014': [1992, 1992, 2012]
+    '2018': [2017, 2017, 2017]
   i_direction: [-1, -1, -1]
   i_increment: [50, 50, 50]
 
@@ -30,15 +32,23 @@ rates:
 
 # Brackets for preferred-rate income, single filers
 brackets_single:
-  value: [0, 22100, 400000]
+  value:
+    '2014': [0, 22100, 400000]
+    '2018': [0, 38600, 425800]
   i_measure: default
   i_base_year: default
   i_direction: default
-  i_increment: [25, 25, 25]
+  # Under the TCJA the single zero rate amount is half the joint amount, which
+  # is rounded down to $50, so it is rounded down to $25 here.
+  i_increment:
+    '2014': [25, 25, 25]
+    '2018': [25, 25, 50]
 
 # Brackets for preferred-rate income, joint filers
 brackets_married:
-  value: [0, 44200, 450000]
+  value:
+    '2014': [0, 44200, 450000]
+    '2018': [0, 77200, 479000]
   i_measure: default
   i_base_year: default
   i_direction: default
@@ -46,7 +56,9 @@ brackets_married:
   
 # Brackets for preferred-rate income, head of household filers
 brackets_head:
-  value: [0, 29600, 425000]
+  value:
+    '2014': [0, 29600, 425000]
+    '2018': [0, 51700, 452400]
   i_measure: default
   i_base_year: default
   i_direction: default
