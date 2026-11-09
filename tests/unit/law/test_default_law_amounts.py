@@ -53,6 +53,23 @@ def test_the_2026_standard_deduction_is_indexed_from_2024(default_law):
     }
 
 
+@pytest.mark.parametrize(
+    "year, tops",
+    [
+        # Rev. Proc. 2023-34, 2024-40 and 2025-32, single filers: the tops of
+        # the 10, 12, 22, 24, 32 and 35 percent brackets.
+        (2024, [11_600, 47_150, 100_525, 191_950, 243_725, 609_350]),
+        (2025, [11_925, 48_475, 103_350, 197_300, 250_525, 626_350]),
+        (2026, [12_400, 50_400, 105_700, 201_775, 256_225, 640_600]),
+    ],
+)
+def test_single_filer_brackets_are_the_irs_amounts(default_law, year, tops):
+    """The brackets are indexed from 2017 (and, for the two lowest from 2026,
+    from 2016) by chained CPI-U as the IRS reads it."""
+    row = default_law.values["ord.brackets"][default_law.years.index(year), 0, 1:7]
+    assert [float(x) for x in row] == [float(t) for t in tops]
+
+
 def test_the_non_itemizer_charitable_deduction_starts_in_2026(default_law):
     """IRC 170(p) as amended by OBBBA sec. 70424: up to $1,000 of cash gifts,
     $2,000 on a joint return, for taxable years beginning after 2025."""
