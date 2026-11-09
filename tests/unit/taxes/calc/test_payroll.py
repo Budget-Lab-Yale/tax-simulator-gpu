@@ -54,13 +54,19 @@ def test_mixed_wage_and_self_employment_coordinates_oasdi_base():
     np.testing.assert_allclose(result["liab_seca_er"], 292.35)
 
 
-def test_self_employment_reporting_threshold_is_strict():
-    at_threshold = calc_pr(records(sole_prop1=400.0), LAW)
-    above_threshold = calc_pr(records(sole_prop1=401.0), LAW)
+def test_seca_threshold_is_on_net_earnings():
+    below_threshold = calc_pr(records(sole_prop1=433.0), LAW)
+    above_threshold = calc_pr(records(sole_prop1=434.0), LAW)
 
-    np.testing.assert_allclose(at_threshold["liab_seca"], 0.0)
-    # $401 × 92.35% × two sides × (10% OASDI + 2% HI).
-    np.testing.assert_allclose(above_threshold["liab_seca"], 88.87764)
+    # $433 × 92.35% is $399.88, which is below $400.
+    np.testing.assert_allclose(below_threshold["liab_seca"], 0.0)
+    # $434 × 92.35% × two sides × (10% OASDI + 2% HI).
+    np.testing.assert_allclose(above_threshold["liab_seca"], 434.0 * 0.9235 * 2 * 0.12)
+
+
+def test_seca_threshold_is_tested_for_each_earner():
+    result = calc_pr(records(sole_prop1=300.0, sole_prop2=300.0), LAW)
+    np.testing.assert_allclose(result["liab_seca"], 0.0)
 
 
 def test_additional_medicare_uses_combined_earnings_without_employer_match():

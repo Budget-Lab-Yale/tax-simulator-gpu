@@ -141,6 +141,21 @@ def index_ratios(
     return ratios
 
 
+def indexed_before_rounding(
+    base_value: np.ndarray,
+    ratio: np.ndarray | None,
+    direction: np.ndarray | None,
+) -> np.ndarray:
+    """The base value grown by the index, with no rounding.
+
+    A slot `apply_indexation` leaves at its base value stays at its base value.
+    """
+    if ratio is None or direction is None:
+        return base_value.astype(np.float64, copy=True)
+    keeps_base = np.isnan(direction) | np.isnan(ratio)
+    return np.where(keeps_base, base_value, base_value * ratio)
+
+
 def apply_indexation(
     base_value: np.ndarray,
     ratio: np.ndarray | None,

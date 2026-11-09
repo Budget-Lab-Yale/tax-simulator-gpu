@@ -129,6 +129,8 @@ def test_every_mapper_in_the_law_tree_evaluates():
             for expression in by_status.values():
                 for name in mappers.identifiers(expression):
                     subparams.setdefault(name, 1.0)
+                for name in mappers.names_read_unrounded(expression):
+                    subparams.setdefault(name + mappers.UNROUNDED_SUFFIX, 1.0)
 
         for new_name, by_status in mapper.items():
             for status, expression in by_status.items():
@@ -141,3 +143,16 @@ def test_every_mapper_in_the_law_tree_evaluates():
     # guards against a glob that finds too little, not a count to maintain.
     assert seen > 2000, f"only walked {seen} mappers"
     assert len(distinct) > 100
+
+
+def test_round_applies_to_the_whole_parenthesized_amount():
+    # Rounded separately to $10, 9,804 and 6,573 are 9,800 and 6,570, or 16,370.
+    # Rounded once, their sum of 16,377 is 16,380.
+    expression = "round((a__unrounded + b__unrounded) / 10) * 10"
+    assert mappers.evaluate(expression, {"a__unrounded": 9_804.0, "b__unrounded": 6_573.0}) == 16_380.0
+
+
+def test_identifiers_read_through_the_unrounded_suffix_and_skip_round():
+    expression = "round((a__unrounded + b) / 10) * 10"
+    assert mappers.identifiers(expression) == {"a", "b"}
+    assert mappers.names_read_unrounded(expression) == {"a"}

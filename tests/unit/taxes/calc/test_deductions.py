@@ -75,7 +75,7 @@ def test_standard_deduction_counts_each_age_and_blindness_bonus():
 
 
 def test_qbi_limit_binds_and_is_slack():
-    law = QbiLaw(0.2, 1e6, 1e6, 1e6, 1e6, 0.0, 0.0, 0.5, 1.0, 0.0, 0.0)
+    law = QbiLaw(0.2, 1e6, 1e6, 1e6, 1e6, 0.0, 0.0, 0.5, 1.0, 0.0, 0.0, 0.0)
     values = {
         "agi": jnp.array([10000.0, 100.0]),
         "std_ded": jnp.zeros(2),
@@ -87,6 +87,14 @@ def test_qbi_limit_binds_and_is_slack():
         "scorp": jnp.zeros(2),
         "farm1": jnp.zeros(2),
         "farm2": jnp.zeros(2),
+        "se_health": jnp.zeros(2),
+        "keogh_contr": jnp.zeros(2),
+        "char_cash": jnp.zeros(2),
+        "char_above_ded": jnp.zeros(2),
+        "part_se1": jnp.zeros(2),
+        "part_se2": jnp.zeros(2),
+        "seca_ded1": jnp.zeros(2),
+        "seca_ded2": jnp.zeros(2),
         "wagebill_sole_prop": jnp.zeros(2),
         "wagebill_part": jnp.zeros(2),
         "wagebill_scorp": jnp.zeros(2),
@@ -192,6 +200,9 @@ def test_itemized_and_below_line_deductions():
         jnp.inf,
         0.0,
         0.0,
+        0.0,
+        0.0,
+        0.0,
     )
     below_data = {
         "tips1": jnp.array([100.0]),
@@ -204,6 +215,7 @@ def test_itemized_and_below_line_deductions():
         "tips_lh1": jnp.ones(1),
         "tips_lh2": jnp.zeros(1),
         "agi": jnp.zeros(1),
+        "filing_status": jnp.array([1]),
         "ot1": jnp.array([90.0]),
         "ot2": jnp.zeros(1),
         "age1": jnp.array([65.0]),
@@ -242,6 +254,9 @@ def test_below_line_deduction_counts_both_seniors():
         jnp.inf,
         0.0,
         0.0,
+        0.0,
+        0.0,
+        0.0,
     )
     records = {
         "tips1": jnp.zeros(1),
@@ -251,6 +266,7 @@ def test_below_line_deduction_counts_both_seniors():
         "tips_lh1": jnp.zeros(1),
         "tips_lh2": jnp.zeros(1),
         "agi": jnp.zeros(1),
+        "filing_status": jnp.array([2]),
         "ot1": jnp.zeros(1),
         "ot2": jnp.zeros(1),
         "age1": jnp.array([65.0]),
@@ -287,6 +303,7 @@ def test_car_loan_interest_deduction_is_capped_and_phased_out_with_agi():
         )
     }
     records["age2"] = jnp.full(n, jnp.nan)
+    records["filing_status"] = jnp.ones(n)
     records["agi"] = jnp.array([50_000.0, 110_000.0, 130_000.0, 50_000.0])
     records["auto_int_exp"] = jnp.array([12_000.0, 5_000.0, 5_000.0, 5_000.0])
     # The last household's loan is for a used car: its draw is above the
@@ -348,6 +365,7 @@ def test_qbi_accepts_per_record_law_parameters():
         txbl_inc_limit=ones,
         po_type=jnp.zeros(n),
         min_value=jnp.zeros(n),
+        char_nonitem_limit=jnp.zeros(n),
     )
     zeros = jnp.zeros(n)
     records = {
@@ -363,6 +381,14 @@ def test_qbi_accepts_per_record_law_parameters():
         "scorp": zeros,
         "farm1": zeros,
         "farm2": zeros,
+        "se_health": zeros,
+        "keogh_contr": zeros,
+        "char_cash": zeros,
+        "char_above_ded": zeros,
+        "part_se1": zeros,
+        "part_se2": zeros,
+        "seca_ded1": zeros,
+        "seca_ded2": zeros,
         "wagebill_sole_prop": zeros,
         "wagebill_part": zeros,
         "wagebill_scorp": zeros,
@@ -389,7 +415,9 @@ def _one_sole_proprietor(agi, std_ded, sole_prop, **deductions):
         name: jnp.zeros(1)
         for name in (
             "item_ded", "pe_ded", "div_pref", "kg_pref", "sole_prop2", "part",
-            "scorp", "farm1", "farm2", "wagebill_sole_prop", "wagebill_part",
+            "scorp", "farm1", "farm2", "part_se1", "part_se2", "se_health",
+            "keogh_contr", "char_cash", "char_above_ded", "seca_ded1",
+            "seca_ded2", "wagebill_sole_prop", "wagebill_part",
             "wagebill_scorp", "wagebill_farm", "sstb_sole_prop", "sstb_part",
             "sstb_scorp", "sstb_farm", "tip_ded", "ot_ded", "senior_ded",
             "auto_int_ded",
@@ -406,7 +434,7 @@ def _one_sole_proprietor(agi, std_ded, sole_prop, **deductions):
 # overtime, senior and car loan interest deductions, so they lower the taxable
 # income limit.
 def test_qbi_taxable_income_limit_is_net_of_the_schedule_1a_deductions():
-    law = QbiLaw(0.2, 1e6, 1e6, 1e6, 1e6, 0.0, 1.0, 0.5, 0.2, 0.0, 0.0)
+    law = QbiLaw(0.2, 1e6, 1e6, 1e6, 1e6, 0.0, 1.0, 0.5, 0.2, 0.0, 0.0, 0.0)
     # $50,000 of business income gives a tentative deduction of $10,000.
     # Without the four deductions, taxable income before the QBI deduction is
     # $60,000 - $15,000 = $45,000, and the limit is 20% of it, $9,000.
@@ -427,7 +455,7 @@ def test_qbi_taxable_income_limit_is_net_of_the_schedule_1a_deductions():
 # (IRC 199A(b)(3)(B)), so the four deductions move a filer back down the range.
 def test_qbi_phase_in_is_measured_net_of_the_schedule_1a_deductions():
     # The 2025 joint threshold of $394,600 and range of $100,000.
-    law = QbiLaw(0.2, 394_600.0, 394_600.0, 100_000.0, 100_000.0, 0.0, 1.0, 0.5, 0.2, 0.0, 0.0)
+    law = QbiLaw(0.2, 394_600.0, 394_600.0, 100_000.0, 100_000.0, 0.0, 1.0, 0.5, 0.2, 0.0, 0.0, 0.0)
     # $300,000 of business income with no wages paid: a tentative deduction of
     # $60,000, all of it above the wage limit of zero. Taxable income before the
     # QBI deduction is $440,000 - $31,500 = $408,500, 13.9% of the way through

@@ -86,11 +86,13 @@ def calc_pr(records: Mapping[str, Array], law: PayrollLaw) -> dict[str, Array]:
     se1 = records["sole_prop1"] + records["farm1"] + records["part_se1"]
     se2 = records["sole_prop2"] + records["farm2"] + records["part_se2"]
     se = se1 + se2
-    reporting = se > law.se_thresh
-    # SECA applies the statutory taxable share (92.35% under baseline law) only
-    # when unit-level net self-employment income exceeds the reporting threshold.
-    txbl_se1 = floored_at(se1, 0.0) * law.seca_taxable_rate * reporting
-    txbl_se2 = floored_at(se2, 0.0) * law.seca_taxable_rate * reporting
+    # SECA applies to the statutory taxable share (92.35% under baseline law) of
+    # self-employment income. No tax is due on an earner's net earnings below the
+    # threshold (IRC 1402(b)(2); Schedule SE line 4c).
+    txbl_se1 = floored_at(se1, 0.0) * law.seca_taxable_rate
+    txbl_se2 = floored_at(se2, 0.0) * law.seca_taxable_rate
+    txbl_se1 = txbl_se1 * (txbl_se1 >= law.se_thresh)
+    txbl_se2 = txbl_se2 * (txbl_se2 >= law.se_thresh)
 
     # Each earner owes each of the two taxes on each of the two sides: FICA on
     # wages, and SECA on self-employment earnings stacked above that earner's
@@ -129,8 +131,12 @@ def calc_pr(records: Mapping[str, Array], law: PayrollLaw) -> dict[str, Array]:
     liab_pr_ee = _added_up((fica, seca), sides=("ee",)) + liab_add_med
     liab_pr_er = liab_fica_er1 + liab_fica_er2 + liab_seca_er
 
-    # Earned income retains gross Schedule C, farm, and partnership income;
-    # the SECA taxable-share adjustment is limited to payroll-tax liability.
+    # Earned income counts net earnings from self-employment after the deduction
+    # for half of SECA tax (IRC 32(c)(2)(A)(ii)).
+    seca_ded1 = _added_up((seca,), sides=("er",), earners=(1,))
+    seca_ded2 = _added_up((seca,), sides=("er",), earners=(2,))
+    ei1 = wages1 + se1 - seca_ded1
+    ei2 = wages2 + se2 - seca_ded2
     return {
         "gross_wages1": gross_wages1,
         "gross_wages2": gross_wages2,
@@ -138,9 +144,11 @@ def calc_pr(records: Mapping[str, Array], law: PayrollLaw) -> dict[str, Array]:
         "se1": se1,
         "se2": se2,
         "se": se,
-        "ei1": wages1 + se1,
-        "ei2": wages2 + se2,
-        "ei": wages1 + se1 + wages2 + se2,
+        "seca_ded1": seca_ded1,
+        "seca_ded2": seca_ded2,
+        "ei1": ei1,
+        "ei2": ei2,
+        "ei": ei1 + ei2,
         "liab_fica_er1": liab_fica_er1,
         "liab_fica_er2": liab_fica_er2,
         "liab_fica": liab_fica,

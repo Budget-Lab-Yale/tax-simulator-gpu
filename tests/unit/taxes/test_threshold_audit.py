@@ -660,8 +660,15 @@ def additional_medicare_threshold(law: YearLaw) -> Overrides:
 
 
 def self_employment_reporting_threshold(law: YearLaw) -> Overrides:
-    """Net self-employment earnings exactly at the reporting threshold."""
-    return {"wages_base1": 50_000.0, "sole_prop1": value(law.payroll.se_thresh)}
+    """Net self-employment earnings half a dollar below the reporting threshold.
+
+    The threshold is tested on net earnings, the taxable share of
+    self-employment income, so the next dollar of income crosses it.
+    """
+    gross_at_threshold = value(law.payroll.se_thresh) / value(
+        law.payroll.seca_taxable_rate
+    )
+    return {"wages_base1": 50_000.0, "sole_prop1": gross_at_threshold - 0.5}
 
 
 def seca_stacked_on_a_filled_wage_base(law: YearLaw) -> Overrides:

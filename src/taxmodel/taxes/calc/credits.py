@@ -111,6 +111,7 @@ class CtcLaw:
     pi_type: Array
     pi_rate: Array
     pi_range: Array
+    ss_alt_min_children: Array
     baby_bonus_in_credit: Array
     baby_bonus: Array
     baby_bonus_pi_rate: Array
@@ -451,15 +452,31 @@ def calc_ctc(records: Mapping[str, Array], law: CtcLaw) -> dict[str, Array]:
     rate_other = jnp.where(
         law.po_type == 1, law.po_rate_other, maximum_other / law.po_range_other
     )
+    reduction1 = excess1 * rate1
     combined_after_first = floored_at(
-        maximum1 + maximum2 - excess1 * rate1, 0.0, sinks_against_the_limit=True
+        maximum1 + maximum2 - reduction1, 0.0, sinks_against_the_limit=True
+    )
+    value_other = jnp.where(
+        law.po_sequential == 1,
+        floored_at(maximum_other - excess2 * rate_other, 0.0, sinks_against_the_limit=True),
+        floored_at(maximum_other - excess1 * rate_other, 0.0, sinks_against_the_limit=True),
+    )
+    # Under a rate phase-out, IRC 24(b)(1) reduces the total credit once. The
+    # reduction comes off the other-dependent credit first and what is left comes
+    # off the first child credit, which keeps as much of the total as possible
+    # refundable, as Schedule 8812 does. A reform that gives the two credits
+    # different rates phases each out separately.
+    reduction_on_child_credit = jnp.where(
+        (law.po_type == 1) & (law.po_rate_other == law.po_rate1),
+        floored_at(reduction1 - (maximum_other - value_other), 0.0),
+        reduction1,
     )
     # Sequential phaseout uses the first reduction against the combined child
     # credit, then assigns the residual between the two child-credit layers.
     value1 = jnp.where(
         law.po_sequential == 1,
         combined_after_first,
-        floored_at(maximum1 - excess1 * rate1, 0.0, sinks_against_the_limit=True),
+        floored_at(maximum1 - reduction_on_child_credit, 0.0, sinks_against_the_limit=True),
     )
     value2 = jnp.where(
         law.po_sequential == 1,
@@ -467,11 +484,6 @@ def calc_ctc(records: Mapping[str, Array], law: CtcLaw) -> dict[str, Array]:
         floored_at(maximum2 - excess2 * rate2, 0.0, sinks_against_the_limit=True),
     )
     value1 = jnp.where(law.po_sequential == 1, value1 - value2, value1)
-    value_other = jnp.where(
-        law.po_sequential == 1,
-        floored_at(maximum_other - excess2 * rate_other, 0.0, sinks_against_the_limit=True),
-        floored_at(maximum_other - excess1 * rate_other, 0.0, sinks_against_the_limit=True),
-    )
     filing_eligible = (records["filing_status"] != 3) | (law.mfs_eligible == 1)
     value1 *= filing_eligible
     value2 *= filing_eligible
@@ -520,9 +532,25 @@ def calc_ctc(records: Mapping[str, Array], law: CtcLaw) -> dict[str, Array]:
     phase_in_rate = jnp.where(
         law.pi_type == 1, law.pi_rate, (maximum1 + maximum2) / law.pi_range
     )
-    ctc_ref = capped_at(
+    phase_in_amount = (
         minimum_refund
-        + floored_at(qualifying_ei - law.pi_thresh, 0.0) * phase_in_rate,
+        + floored_at(qualifying_ei - law.pi_thresh, 0.0) * phase_in_rate
+    )
+    # Larger families may instead use social security taxes less the EITC (IRC
+    # 24(d)(1)(B)(ii) and 24(d)(2)). `liab_pr_ee` holds the employee's FICA tax,
+    # Additional Medicare tax and half of SECA tax.
+    payroll_alternative = jnp.where(
+        n_young + n_old >= law.ss_alt_min_children,
+        floored_at(records["liab_pr_ee"] - records["eitc"], 0.0),
+        0.0,
+    )
+    # At zero earnings the two are often both zero, and the larger has no single
+    # more-income side. The tie takes the earned income formula, whose slope
+    # there is zero below the phase-in threshold. The payroll alternative's
+    # slope is the payroll rate less the EITC phase-in rate, which is negative
+    # for a family that can claim the EITC, the common case.
+    ctc_ref = capped_at(
+        floored_at(phase_in_amount, payroll_alternative),
         capped_at(remaining_ctc, maximum_refund_young + maximum_refund_old),
     )
     baby_bonus = capped_at(
@@ -553,8 +581,9 @@ def _eitc_parameter(child_count: Array, values: tuple[Array, ...]) -> Array:
 
 def calc_eitc(records: Mapping[str, Array], law: EitcLaw) -> dict[str, Array]:
     """Return EITC after age, filing-status, investment-income, and precert rules."""
-    # A worker without a qualifying child must satisfy the age test; a joint
-    # return tests each spouse before adding that spouse's earnings.
+    # A worker without a qualifying child must satisfy the age test. A joint
+    # return qualifies if either spouse does, and the credit is then based on
+    # the couple's combined earned income (IRC 32(c)(1)(A)(ii) and 32(c)(2)).
     has_child = records["n_dep_eitc"] > 0
     qualifies1 = has_child | (
         (records["age1"] >= law.min_age) & (records["age1"] <= law.max_age)
@@ -563,13 +592,13 @@ def calc_eitc(records: Mapping[str, Array], law: EitcLaw) -> dict[str, Array]:
         has_child
         | ((records["age2"] >= law.min_age) & (records["age2"] <= law.max_age))
     )
-    earned_income = records["ei1"] * qualifies1 + jnp.where(
-        records["filing_status"] == 2, records["ei2"] * qualifies2, 0.0
-    )
+    joint = records["filing_status"] == 2
     # The dependent flag is compared with zero, so any nonzero value marks a
     # dependent.
-    earned_income *= (records["dep_status"] == 0) & (
-        (law.mfs_eligible == 1) | (records["filing_status"] != 3)
+    eligible = (
+        (qualifies1 | (joint & qualifies2))
+        & (records["dep_status"] == 0)
+        & ((law.mfs_eligible == 1) | (records["filing_status"] != 3))
     )
     investment_income = (
         records["txbl_int"]
@@ -583,7 +612,10 @@ def calc_eitc(records: Mapping[str, Array], law: EitcLaw) -> dict[str, Array]:
     )
     # Eligibility survives exactly at the investment-income limit and is lost
     # immediately above it.
-    earned_income *= investment_income <= law.inv_inc_limit
+    eligible = eligible & (investment_income <= law.inv_inc_limit)
+    earned_income = (
+        records["ei1"] + jnp.where(joint, records["ei2"], 0.0)
+    ) * eligible
     n_children = records["n_dep_eitc"]
     # Each child-count schedule has its own phase-in rate, plateau endpoint, and
     # phaseout threshold.
@@ -602,9 +634,10 @@ def calc_eitc(records: Mapping[str, Array], law: EitcLaw) -> dict[str, Array]:
     )
 
     def credit(ei: Array) -> Array:
-        # The credit phases in on earned income but phases out against the larger
-        # of earned income and AGI, as on the EITC worksheet.
-        maximum = capped_at(ei, pi_end) * pi_rate
+        # The credit is the smaller of the phase-in amount and the maximum credit
+        # less the phase-out amount (IRC 32(a)(2)). It phases in on earned income
+        # and phases out against the larger of earned income and AGI.
+        phase_in_amount = capped_at(ei, pi_end) * pi_rate
         phaseout_income = floored_at(records["agi"], ei)
         # This amount rises with earnings over the phase-in range and falls over
         # the phaseout range, so it hits zero twice and has no single more-income
@@ -613,12 +646,18 @@ def calc_eitc(records: Mapping[str, Array], law: EitcLaw) -> dict[str, Array]:
         # data -- at the cost of still reporting the phaseout rate to a household
         # sitting exactly where the credit runs out, where there are no records.
         return floored_at(
-            maximum - floored_at(phaseout_income - po_thresh, 0.0) * po_rate,
+            capped_at(
+                phase_in_amount,
+                pi_end * pi_rate
+                - floored_at(phaseout_income - po_thresh, 0.0) * po_rate,
+            ),
             0.0,
         )
 
     eitc = credit(earned_income)
-    prior_eitc = credit(records["ei_prior_yr"] * (earned_income > 0))
+    # An eligible filer may elect prior-year earned income with no current-year
+    # earned income, as under the 2021 election (ARPA sec. 9626).
+    prior_eitc = credit(records["ei_prior_yr"] * eligible)
     eitc = jnp.where(law.ei_prior_yr == 1, floored_at(eitc, prior_eitc), eitc)
     # The 3.1% denial draw implements the parent-precertification score.
     denied_by_precert = (

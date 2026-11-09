@@ -18,9 +18,14 @@ bracket is half the joint one, the additional Medicare tax threshold likewise,
 and the student loan interest deduction is not doubled for joint returns
 (`sl_limit_single * 0` for the separate return that cannot claim it).
 
-The evaluator accepts identifiers, numbers, `+ - * /`, and parentheses, and
-refuses everything else. Nothing here calls `eval()`, so a law file cannot
-execute code.
+A name ending in `__unrounded` reads that subparameter's indexed value before
+rounding, and `round(...)` rounds to the nearest whole number, for amounts the
+statute rounds only after combining them, such as the joint EITC phase-out
+threshold (IRC 32(j)(2)(A)).
+
+The evaluator accepts identifiers, numbers, `+ - * /`, parentheses and
+`round(...)`, and refuses everything else. Nothing here calls `eval()`, so a law
+file cannot execute code.
 """
 
 from __future__ import annotations
@@ -45,6 +50,9 @@ _TOKENS = re.compile(
 
 Operand = float | np.ndarray
 
+ROUND = "round"
+UNROUNDED_SUFFIX = "__unrounded"
+
 
 @dataclass(frozen=True)
 class _Token:
@@ -62,7 +70,7 @@ def _tokenize(expression: str) -> list[_Token]:
             raise LawError(
                 f"mapper expression {expression!r} has an unreadable character "
                 f"at position {at}: {expression[at]!r}. Mappers may use "
-                "subparameter names, numbers, + - * / and parentheses."
+                "subparameter names, numbers, + - * /, parentheses and round()."
             )
         kind = match.lastgroup
         assert kind is not None
@@ -80,6 +88,7 @@ class _Parser:
         expression := term (('+' | '-') term)*
         term       := factor (('*' | '/') factor)*
         factor     := ('+' | '-') factor | number | name | '(' expression ')'
+                    | 'round' '(' expression ')'
     """
 
     def __init__(self, expression: str, resolve: Callable[[str], Operand]):
@@ -100,6 +109,10 @@ class _Parser:
 
     def peek(self) -> _Token | None:
         return self.tokens[self.at] if self.at < len(self.tokens) else None
+
+    def _next_is_open_parenthesis(self) -> bool:
+        following = self.at + 1
+        return following < len(self.tokens) and self.tokens[following].text == "("
 
     def take(self) -> _Token:
         token = self.tokens[self.at]
@@ -140,6 +153,10 @@ class _Parser:
         if token.kind == "number":
             self.take()
             return float(token.text)
+        if token.text == ROUND and self._next_is_open_parenthesis():
+            self.take()
+            # np.round breaks ties to even.
+            return np.round(self.factor())
         if token.kind == "name":
             self.take()
             return self.resolve(token.text)
@@ -177,5 +194,18 @@ def evaluate(expression: str, operands: Mapping[str, Operand]) -> Operand:
 
 def identifiers(expression: str) -> set[str]:
     """The subparameter names an expression actually reads."""
-    return {t.text for t in _tokenize(str(expression)) if t.kind == "name"}
+    return {
+        t.text.removesuffix(UNROUNDED_SUFFIX)
+        for t in _tokenize(str(expression))
+        if t.kind == "name" and t.text != ROUND
+    }
+
+
+def names_read_unrounded(expression: str) -> set[str]:
+    """The subparameters an expression reads before rounding."""
+    return {
+        t.text.removesuffix(UNROUNDED_SUFFIX)
+        for t in _tokenize(str(expression))
+        if t.kind == "name" and t.text.endswith(UNROUNDED_SUFFIX)
+    }
 

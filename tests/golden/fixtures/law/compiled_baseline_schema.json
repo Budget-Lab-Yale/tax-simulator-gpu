@@ -301,6 +301,19 @@
       "padding": "nan"
     },
     {
+      "name": "below.ot_ded_mfs_eligible",
+      "parameter": "below",
+      "subparameter": "ot_ded_mfs_eligible",
+      "dtype": "float64",
+      "units": "indicator",
+      "slots_used": 1,
+      "varies_by_filing_status": false,
+      "indexed": false,
+      "from_mapper": false,
+      "differentiable": false,
+      "padding": "nan"
+    },
+    {
       "name": "below.ot_ded_po_range",
       "parameter": "below",
       "subparameter": "ot_ded_po_range",
@@ -366,6 +379,19 @@
       "padding": "nan"
     },
     {
+      "name": "below.senior_ded_mfs_eligible",
+      "parameter": "below",
+      "subparameter": "senior_ded_mfs_eligible",
+      "dtype": "float64",
+      "units": "indicator",
+      "slots_used": 1,
+      "varies_by_filing_status": false,
+      "indexed": false,
+      "from_mapper": false,
+      "differentiable": false,
+      "padding": "nan"
+    },
+    {
       "name": "below.senior_ded_po_rate",
       "parameter": "below",
       "subparameter": "senior_ded_po_rate",
@@ -428,6 +454,19 @@
       "indexed": false,
       "from_mapper": false,
       "differentiable": true,
+      "padding": "nan"
+    },
+    {
+      "name": "below.tip_ded_mfs_eligible",
+      "parameter": "below",
+      "subparameter": "tip_ded_mfs_eligible",
+      "dtype": "float64",
+      "units": "indicator",
+      "slots_used": 1,
+      "varies_by_filing_status": false,
+      "indexed": false,
+      "from_mapper": false,
+      "differentiable": false,
       "padding": "nan"
     },
     {
@@ -1276,6 +1315,19 @@
       "padding": "nan"
     },
     {
+      "name": "ctc.ss_alt_min_children",
+      "parameter": "ctc",
+      "subparameter": "ss_alt_min_children",
+      "dtype": "float64",
+      "units": "dollars",
+      "slots_used": 1,
+      "varies_by_filing_status": false,
+      "indexed": false,
+      "from_mapper": false,
+      "differentiable": true,
+      "padding": "nan"
+    },
+    {
       "name": "ctc.value_old",
       "parameter": "ctc",
       "subparameter": "value_old",
@@ -2075,9 +2127,9 @@
       "dtype": "float64",
       "units": "rate",
       "slots_used": 1,
-      "varies_by_filing_status": false,
+      "varies_by_filing_status": true,
       "indexed": false,
-      "from_mapper": false,
+      "from_mapper": true,
       "differentiable": true,
       "padding": "nan"
     },
