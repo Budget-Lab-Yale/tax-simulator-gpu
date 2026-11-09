@@ -70,6 +70,36 @@ def test_single_filer_brackets_are_the_irs_amounts(default_law, year, tops):
     assert [float(x) for x in row] == [float(t) for t in tops]
 
 
+@pytest.mark.parametrize(
+    "field, year, slot, amounts",
+    [
+        # Rev. Proc. 2024-40 (2025) and 2025-32 (2026). Statuses are single,
+        # joint, separate, head of household; None is not checked.
+        ("estate.exemption", 2025, 0, (13_990_000,) * 4),
+        ("eitc.po_thresh_0", 2025, 0, (10_620, 17_730, 10_620, 10_620)),
+        ("amt.exempt_po_thresh", 2025, 0, (626_350, 1_252_700, 626_350, 626_350)),
+        ("amt.brackets", 2025, 1, (239_100, 239_100, 119_550, 239_100)),
+        ("pref.brackets", 2025, 1, (48_350, 96_700, 48_350, 64_750)),
+        ("pref.brackets", 2025, 2, (533_400, 600_050, None, 566_700)),
+        ("pref.brackets", 2026, 1, (49_450, 98_900, 49_450, 66_200)),
+        ("pref.brackets", 2026, 2, (545_500, 613_700, None, 579_600)),
+        ("qbi.po_thresh_non_sstb", 2026, 0, (201_750, 403_500, 201_775, 201_750)),
+        ("agi.bus_loss_limit", 2026, 0, (256_000, 512_000, 256_000, 256_000)),
+    ],
+)
+def test_indexed_amounts_are_the_irs_amounts(default_law, field, year, slot, amounts):
+    """Rounding rules, base years and base amounts as the statute states them:
+    the estate exemption rounds to the nearest $10,000 from a 2010 base; the
+    childless EITC phase-out start is indexed; the AMT 28 percent threshold
+    rounds to the nearest $100 and the unmarried phase-out threshold is half
+    the joint one; the capital gains thresholds are the TCJA amounts indexed
+    from 2017; the separate-return QBI threshold rounds to $25; the excess
+    business loss limit is OBBBA's, indexed from 2024."""
+    row = default_law.values[field][default_law.years.index(year), :, slot]
+    checked = [(float(x), float(a)) for x, a in zip(row, amounts) if a is not None]
+    assert [x for x, _ in checked] == [a for _, a in checked]
+
+
 def test_the_non_itemizer_charitable_deduction_starts_in_2026(default_law):
     """IRC 170(p) as amended by OBBBA sec. 70424: up to $1,000 of cash gifts,
     $2,000 on a joint return, for taxable years beginning after 2025."""
