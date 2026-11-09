@@ -29,11 +29,11 @@ Every field is a `float64` array indexed `[year, filing_status, slot]`, shaped `
 
 ## Totals
 
-- Fields: 247
-- Differentiable fields: 187
+- Fields: 251
+- Differentiable fields: 188
 - Indexed fields: 43
-- Built by a filing-status mapper: 58
-- By units: calendar year 2, count 10, dollars 118, indicator 43, rate 63, ratio 1, regime code 5, share of AGI 5
+- Built by a filing-status mapper: 59
+- By units: calendar year 2, count 10, dollars 119, indicator 46, rate 63, ratio 1, regime code 5, share of AGI 5
 
 
 ## `agi`
@@ -76,16 +76,19 @@ Every field is a `float64` array indexed `[year, filing_status, slot]`, shaped `
 | --- | --- | --- | --- | --- | --- | --- |
 | `below.ot_ded_half` | indicator | 1 |  |  |  |  |
 | `below.ot_ded_limit` | dollars | 1 | yes |  | yes | yes |
+| `below.ot_ded_mfs_eligible` | indicator | 1 |  |  |  |  |
 | `below.ot_ded_po_range` | dollars | 1 |  |  |  | yes |
 | `below.ot_ded_po_rate` | rate | 1 |  |  |  | yes |
 | `below.ot_ded_po_thresh` | dollars | 1 | yes |  | yes | yes |
 | `below.ot_ded_po_type` | indicator | 1 |  |  |  |  |
 | `below.ot_ded_wage_limit` | dollars | 1 |  |  |  | yes |
+| `below.senior_ded_mfs_eligible` | indicator | 1 |  |  |  |  |
 | `below.senior_ded_po_rate` | rate | 1 |  |  |  | yes |
 | `below.senior_ded_po_thresh` | dollars | 1 | yes |  | yes | yes |
 | `below.senior_ded_value` | dollars | 1 |  |  |  | yes |
 | `below.tip_ded_lh` | indicator | 1 |  |  |  |  |
 | `below.tip_ded_limit` | dollars | 1 |  |  |  | yes |
+| `below.tip_ded_mfs_eligible` | indicator | 1 |  |  |  |  |
 | `below.tip_ded_po_range` | dollars | 1 |  |  |  | yes |
 | `below.tip_ded_po_rate` | rate | 1 |  |  |  | yes |
 | `below.tip_ded_po_thresh` | dollars | 1 | yes |  | yes | yes |
@@ -181,6 +184,7 @@ Every field is a `float64` array indexed `[year, filing_status, slot]`, shaped `
 | `ctc.po_sequential` | indicator | 1 |  |  |  |  |
 | `ctc.po_thresh` | dollars | 2 | yes |  | yes | yes |
 | `ctc.po_type` | indicator | 1 |  |  |  |  |
+| `ctc.ss_alt_min_children` | dollars | 1 |  |  |  | yes |
 | `ctc.value_old` | dollars | 2 |  | yes |  | yes |
 | `ctc.value_other` | dollars | 1 |  |  |  | yes |
 | `ctc.value_young` | dollars | 2 |  | yes |  | yes |
@@ -267,7 +271,7 @@ Every field is a `float64` array indexed `[year, filing_status, slot]`, shaped `
 | `item.salt_floor_thresh` | dollars | 1 | yes |  | yes | yes |
 | `item.salt_limit` | dollars | 1 | yes |  | yes | yes |
 | `item.salt_limit_tax_value_rate` | rate | 1 |  |  |  | yes |
-| `item.salt_po_rate` | rate | 1 |  |  |  | yes |
+| `item.salt_po_rate` | rate | 1 | yes |  | yes | yes |
 | `item.salt_workaround_allowed_non_sstb` | rate | 1 |  |  |  | yes |
 | `item.salt_workaround_allowed_part` | rate | 1 |  |  |  | yes |
 | `item.salt_workaround_allowed_sstb` | rate | 1 |  |  |  | yes |

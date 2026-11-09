@@ -19,7 +19,7 @@ def test_the_path_is_root_type_name_version_vintage_scenario():
     root = interface_root("Macro-Projections")
     assert root == Path(
         "/nfs/roberts/project/pi_nrs36/shared/model_data"
-        "/Macro-Projections/v3/2026022522/baseline"
+        "/Macro-Projections/v3/2026110912/baseline"
     )
 
 

@@ -31,7 +31,7 @@ r:
     out and validate within about 15% on tax.
   derived_under:
     tax_data: '2026070814'
-    macro_projections: '2026022522'
+    macro_projections: '2026110912'
   # Until M1 this value's file-change check watched
   # other/estate_tax/calibrate_estate_v2.R, other/estate_tax/estate_module.R in
   # the R model's repo. Those scripts were never ported and the R repo is
@@ -47,7 +47,9 @@ r:
     columns are identical between that vintage and 2026070814, so the fit does not
     move and the 2026-07-08 run re-pinned the guard alone. Conditioned on the
     donor-clone cluster cap, which is an input to the objective rather than a result
-    of it, so moving the cap means refitting. Residuals and open issues:
+    of it, so moving the cap means refitting. Not refit for Macro-Projections
+    2026110912 and the statutory estate exemption path, which together move the
+    exemption by $10,000 or less in every year from 2018. Residuals and open issues:
     other/estate_tax/new_estate_modeling_thoughts.md section 10h.
 
 rho_pt:
@@ -60,7 +62,7 @@ rho_pt:
     r, bounded below at 0.5 to keep the discount plausible.
   derived_under:
     tax_data: '2026070814'
-    macro_projections: '2026022522'
+    macro_projections: '2026110912'
   # Until M1 this value's file-change check watched
   # other/estate_tax/calibrate_estate_v2.R, other/estate_tax/estate_module.R in
   # the R model's repo. Those scripts were never ported and the R repo is

@@ -85,6 +85,7 @@ class QbiLaw:
     txbl_inc_limit: Array
     po_type: Array
     min_value: Array
+    char_nonitem_limit: Array
 
 
 @dataclass(frozen=True)
@@ -110,6 +111,9 @@ class BelowDeductionLaw:
     auto_int_ded_po_thresh: Array
     auto_int_ded_po_rate: Array
     auto_int_ded_new: Array
+    tip_ded_mfs_eligible: Array
+    ot_ded_mfs_eligible: Array
+    senior_ded_mfs_eligible: Array
 
 
 # The share of car loans that finance a new car (Experian, State of the
@@ -303,6 +307,61 @@ def calc_pe_ded(
     return {"pe_ded": n_pe * law.value * (1 - po_share)}
 
 
+def _deductions_by_business(
+    records: Mapping[str, Array],
+) -> tuple[Array, Array, Array, Array]:
+    """The deductions attributable to each kind of business.
+
+    Returns the amounts for sole proprietorships, partnerships, S corporations
+    and farms: half of SECA tax, self-employed health insurance and retirement
+    contributions. Each earner's SECA deduction is split across that earner's
+    businesses in proportion to positive self-employment earnings. An earner
+    with no such earnings has no deduction, and the deduction on the next dollar
+    is assigned to the sole proprietorship so that the marginal rate on that
+    dollar includes it. Health insurance is a tax unit amount, split across
+    positive self-employment earnings and positive S corporation income, since
+    a shareholder owning more than 2% deducts it against S corporation wages.
+    Retirement contributions are split across self-employment earnings only. A
+    unit with none of the relevant income has no reduction.
+    """
+    sole_prop, part, farm = 0.0, 0.0, 0.0
+    positive = {
+        name: floored_at(records[f"{name}1"], 0.0) + floored_at(records[f"{name}2"], 0.0)
+        for name in ("sole_prop", "part_se", "farm")
+    }
+    positive_scorp = floored_at(records["scorp"], 0.0)
+    se_total = positive["sole_prop"] + positive["part_se"] + positive["farm"]
+    health_total = se_total + positive_scorp
+    has_se = se_total > 0.0
+    has_health_base = health_total > 0.0
+    retirement_per_dollar = jnp.where(
+        has_se, records["keogh_contr"] / jnp.where(has_se, se_total, 1.0), 0.0
+    )
+    health_per_dollar = jnp.where(
+        has_health_base,
+        records["se_health"] / jnp.where(has_health_base, health_total, 1.0),
+        0.0,
+    )
+    unit_amount_per_dollar = retirement_per_dollar + health_per_dollar
+    for earner in ("1", "2"):
+        earner_sole_prop = floored_at(records[f"sole_prop{earner}"], 0.0)
+        earner_part = floored_at(records[f"part_se{earner}"], 0.0)
+        earner_farm = floored_at(records[f"farm{earner}"], 0.0)
+        total = earner_sole_prop + earner_part + earner_farm
+        has_earnings = total > 0.0
+        safe_total = jnp.where(has_earnings, total, 1.0)
+        deduction = records[f"seca_ded{earner}"]
+        sole_prop += deduction * jnp.where(has_earnings, earner_sole_prop / safe_total, 1.0)
+        part += deduction * jnp.where(has_earnings, earner_part / safe_total, 0.0)
+        farm += deduction * jnp.where(has_earnings, earner_farm / safe_total, 0.0)
+    return (
+        sole_prop + positive["sole_prop"] * unit_amount_per_dollar,
+        part + positive["part_se"] * unit_amount_per_dollar,
+        positive_scorp * health_per_dollar,
+        farm + positive["farm"] * unit_amount_per_dollar,
+    )
+
+
 def calc_qbi_ded(records: Mapping[str, Array], law: QbiLaw) -> dict[str, Array]:
     """The §199A deduction, limited by taxable income before the deduction."""
     # Taxable income before the QBI deduction (IRC 199A(e)(1)) measures both the
@@ -310,10 +369,15 @@ def calc_qbi_ded(records: Mapping[str, Array], law: QbiLaw) -> dict[str, Array]:
     # larger of the standard and itemized deductions, before calc_txbl_inc
     # chooses a deduction, and the tip, overtime, senior and car loan interest
     # deductions, which every filer takes (Form 8995 line 11: Form 1040 line
-    # 11a less lines 12e and 13b).
+    # 11a less lines 12e and 13b). A filer who does not itemize also subtracts
+    # the charitable deduction of IRC 170(p).
+    char_nonitem = capped_at(
+        floored_at(records["char_cash"] - records["char_above_ded"], 0.0),
+        law.char_nonitem_limit,
+    )
     txbl_inc = floored_at(
         records["agi"]
-        - floored_at(records["item_ded"], records["std_ded"])
+        - floored_at(records["item_ded"], records["std_ded"] + char_nonitem)
         - records["pe_ded"]
         - records["tip_ded"]
         - records["ot_ded"]
@@ -323,12 +387,15 @@ def calc_qbi_ded(records: Mapping[str, Array], law: QbiLaw) -> dict[str, Array]:
     )
     # §199A works on the household's income from each kind of business, so
     # the two earners' sole-proprietorship and farm income are added together.
+    # Qualified business income is net of the deductions attributable to the
+    # business (Treas. Reg. 1.199A-3(b)(1)(vi)).
+    ded_sole_prop, ded_part, ded_scorp, ded_farm = _deductions_by_business(records)
     inc = jnp.stack(
         (
-            records["sole_prop1"] + records["sole_prop2"],
-            records["part"],
-            records["scorp"],
-            records["farm1"] + records["farm2"],
+            records["sole_prop1"] + records["sole_prop2"] - ded_sole_prop,
+            records["part"] - ded_part,
+            records["scorp"] - ded_scorp,
+            records["farm1"] + records["farm2"] - ded_farm,
         ),
         axis=-1,
     )
@@ -455,6 +522,9 @@ def calc_below_ded(
     records: Mapping[str, Array], law: BelowDeductionLaw
 ) -> dict[str, Array]:
     """Return the tip, overtime, senior and car loan interest deductions below AGI."""
+    # A married person must file jointly to claim the tip and overtime
+    # deductions (IRC 224 and 225).
+    separate = records["filing_status"] == 3
     # Tips and overtime are unavailable once an earner's own wages exceed the
     # applicable eligibility limit; a joint return evaluates each earner alone.
     # The limit is tested against the earner's whole pay, tips and overtime
@@ -487,9 +557,12 @@ def calc_below_ded(
         po_range=law.ot_ded_po_range,
         po_thresh=law.ot_ded_po_thresh,
     )
-    seniors = (records["age1"] >= 65).astype(jnp.int64) + (
-        (~jnp.isnan(records["age2"])) & (records["age2"] >= 65)
-    ).astype(jnp.int64)
+    # A married person must file jointly to claim the senior deduction (IRC
+    # 151(d)(5)(C)).
+    seniors = (
+        (records["age1"] >= 65).astype(jnp.int64)
+        + ((~jnp.isnan(records["age2"])) & (records["age2"] >= 65)).astype(jnp.int64)
+    ) * (~separate | (law.senior_ded_mfs_eligible == 1))
     # The senior amount stacks for each qualifying spouse and phases out per
     # qualifying person under the model's stated rate.
     senior = phased_out(
@@ -510,8 +583,8 @@ def calc_below_ded(
         records["r.new_car"] < NEW_CAR_FINANCING_SHARE
     )
     return {
-        "tip_ded": tip,
-        "ot_ded": ot,
+        "tip_ded": tip * (~separate | (law.tip_ded_mfs_eligible == 1)),
+        "ot_ded": ot * (~separate | (law.ot_ded_mfs_eligible == 1)),
         "senior_ded": senior,
         "auto_int_ded": auto_int,
     }

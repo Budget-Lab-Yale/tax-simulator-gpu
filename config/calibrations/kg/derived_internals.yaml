@@ -11,13 +11,13 @@
 
 derived_from: config/calibrations/kg/targets.yaml
 achieved_moments:
-  permanent_realization_elasticity: -0.5998047475746062
-  transitory_realization_elasticity: 1.2000924871249066
+  permanent_realization_elasticity: -0.6000023072363357
+  transitory_realization_elasticity: 1.199998794009094
 derivation:
   targets:
     permanent_realization_elasticity: -0.6
     transitory_realization_elasticity: 1.2
-  git_commit: de58bf8ec97e44cd6590296d71a3bdbb3a6095e9
-  date: '2026-09-26'
-  notes: Newton's method converged in 0 steps; the furthest a moment finished from
-    its target was 0.000195.
+  git_commit: 9b1c79bfd17e570f6f826ab9d5367847f643e368
+  date: '2026-11-09'
+  notes: Newton's method converged in 1 step; the furthest a moment finished from
+    its target was 2.31e-06.

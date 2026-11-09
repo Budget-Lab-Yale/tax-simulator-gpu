@@ -115,6 +115,29 @@ def test_the_ratio_is_lagged_a_year(two_percent):
     assert ratios[years.index(2025), 0] == pytest.approx(1.02**4)
 
 
+def test_the_latest_year_is_read_as_first_published_and_the_base_year_as_revised():
+    """IRC 1(f)(6)(A): the IRS uses chained CPI-U as published in September,
+    when the latest year's average is still preliminary and the base year's
+    is final.
+
+    Prices grow 2% a year in the revised series, and every year's level was
+    first published 0.1% above its revised level. An amount for 2025 indexed
+    from 2020 is the 2024 level as first published over the revised 2020
+    level. An amount indexed from 2024 is 1 in 2025: the latest year is the
+    base year, and the IRS reads both from the same release.
+    """
+    years = tuple(range(2000, 2031))
+    table = IndexTable(
+        growth={"chained_cpi": {y: 0.02 for y in years}},
+        preliminary={"chained_cpi": {y: 1.001 for y in years}},
+    )
+    measure = {y: "chained_cpi" for y in years}
+    run_years = (2025,)
+    ratios = index_ratios(measure, np.array([[2020.0, 2024.0]]), table, run_years, "x")
+    assert ratios[0, 0] == pytest.approx(1.02**4 * 1.001)
+    assert ratios[0, 1] == pytest.approx(1.0)
+
+
 def test_a_frozen_measure_stops_the_chain_for_good(two_percent):
     """Writing the measure out is how the TCJA froze a phaseout, and it sticks."""
     measure = {y: ("cpi" if y < 2020 else None) for y in range(2000, 2031)}

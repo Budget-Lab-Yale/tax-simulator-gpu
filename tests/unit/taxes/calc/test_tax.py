@@ -97,6 +97,7 @@ def test_alt_max_uses_strict_qualification_and_excludes_mfs_itemizer():
 
 def test_amt_swaps_only_ordinary_schedule_and_nets_regular_liability():
     records = {
+        "filing_status": jnp.array([1]),
         "agi": jnp.array([30_000.0]),
         "ded": jnp.array([5_000.0]),
         "pe_ded": jnp.zeros(1),
@@ -145,6 +146,7 @@ def _amt_with_senior_deduction(pe_pref, auto_int_ded=0.0):
     """AMT gross income for a non-itemizer and an itemizer, each with $100,000
     of AGI and a $6,000 senior deduction."""
     records = {
+        "filing_status": jnp.array([1, 1]),
         "agi": jnp.array([100_000.0, 100_000.0]),
         # The non-itemizer's `ded` is the $15,000 standard deduction plus the
         # senior deduction; the itemizer's is $30,000 of itemized deductions,

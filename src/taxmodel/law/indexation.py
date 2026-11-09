@@ -10,6 +10,11 @@ The index ratio is lagged by one year: the amount in force in year y uses
 growth measured through y-1, because the IRS sets next year's tables from this
 year's inflation.
 
+For chained CPI-U, the price level for y-1 is the one first published in
+September of y-1, before BLS revises it, and the base year's level is the
+revised one. Section 1(f)(6)(A) has the IRS use the index values published as
+of that September, and by then the base year's values are final.
+
 Rounding to the nearest increment breaks a tie to the even multiple: $12.50 at
 a $1 increment rounds to $12, $13.50 to $14. Ties occur by construction,
 because the statute states round base values and the increments are $50 and
@@ -19,7 +24,7 @@ $100. The fixtures in tests/golden/fixtures/law check this.
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 
@@ -41,6 +46,14 @@ class IndexTable:
     """
 
     growth: Mapping[str, Mapping[int, float]]
+    # A year's price level as first published, divided by its revised level,
+    # by series and year. A series or year that is absent has a ratio of 1.
+    preliminary: Mapping[str, Mapping[int, float]] = field(default_factory=dict)
+
+    def preliminary_ratio(self, series: str | None, year: int) -> float:
+        if series is None:
+            return 1.0
+        return self.preliminary.get(series, {}).get(year, 1.0)
 
     @classmethod
     def from_rows(cls, rows: Iterable[tuple[str, int, float]]) -> IndexTable:
@@ -124,21 +137,43 @@ def index_ratios(
     """The factor each slot's base value is multiplied by, `[year, slot]`.
 
     Growth from the statute's base year through the year before the one in
-    force.
+    force. The level for the year before is the one first published (see the
+    module docstring), unless that year is itself the base year, in which case
+    the ratio is 1.
     """
     levels = index_levels(measure, table, years, label)
 
     ratios = np.full(i_base_year.shape, np.nan, dtype=np.float64)
     for row, year in enumerate(years):
         lagged = levels.get(year - 1, np.nan)
+        first_published = table.preliminary_ratio(measure.get(year - 1), year - 1)
         for slot in range(i_base_year.shape[1]):
             base_year = i_base_year[row, slot]
             if np.isnan(base_year):
                 # This slot is not indexed, as in the donut-hole design where
                 # the bracket above the taxable maximum stays nominal.
                 continue
-            ratios[row, slot] = lagged / levels.get(int(base_year), np.nan)
+            base_level = levels.get(int(base_year), np.nan)
+            if int(base_year) < year - 1:
+                ratios[row, slot] = lagged * first_published / base_level
+            else:
+                ratios[row, slot] = lagged / base_level
     return ratios
+
+
+def indexed_before_rounding(
+    base_value: np.ndarray,
+    ratio: np.ndarray | None,
+    direction: np.ndarray | None,
+) -> np.ndarray:
+    """The base value grown by the index, with no rounding.
+
+    A slot `apply_indexation` leaves at its base value stays at its base value.
+    """
+    if ratio is None or direction is None:
+        return base_value.astype(np.float64, copy=True)
+    keeps_base = np.isnan(direction) | np.isnan(ratio)
+    return np.where(keeps_base, base_value, base_value * ratio)
 
 
 def apply_indexation(

@@ -53,6 +53,53 @@ def test_the_2026_standard_deduction_is_indexed_from_2024(default_law):
     }
 
 
+@pytest.mark.parametrize(
+    "year, tops",
+    [
+        # Rev. Proc. 2023-34, 2024-40 and 2025-32, single filers: the tops of
+        # the 10, 12, 22, 24, 32 and 35 percent brackets.
+        (2024, [11_600, 47_150, 100_525, 191_950, 243_725, 609_350]),
+        (2025, [11_925, 48_475, 103_350, 197_300, 250_525, 626_350]),
+        (2026, [12_400, 50_400, 105_700, 201_775, 256_225, 640_600]),
+    ],
+)
+def test_single_filer_brackets_are_the_irs_amounts(default_law, year, tops):
+    """The brackets are indexed from 2017 (and, for the two lowest from 2026,
+    from 2016) by chained CPI-U as the IRS reads it."""
+    row = default_law.values["ord.brackets"][default_law.years.index(year), 0, 1:7]
+    assert [float(x) for x in row] == [float(t) for t in tops]
+
+
+@pytest.mark.parametrize(
+    "field, year, slot, amounts",
+    [
+        # Rev. Proc. 2024-40 (2025) and 2025-32 (2026). Statuses are single,
+        # joint, separate, head of household; None is not checked.
+        ("estate.exemption", 2025, 0, (13_990_000,) * 4),
+        ("eitc.po_thresh_0", 2025, 0, (10_620, 17_730, 10_620, 10_620)),
+        ("amt.exempt_po_thresh", 2025, 0, (626_350, 1_252_700, 626_350, 626_350)),
+        ("amt.brackets", 2025, 1, (239_100, 239_100, 119_550, 239_100)),
+        ("pref.brackets", 2025, 1, (48_350, 96_700, 48_350, 64_750)),
+        ("pref.brackets", 2025, 2, (533_400, 600_050, None, 566_700)),
+        ("pref.brackets", 2026, 1, (49_450, 98_900, 49_450, 66_200)),
+        ("pref.brackets", 2026, 2, (545_500, 613_700, None, 579_600)),
+        ("qbi.po_thresh_non_sstb", 2026, 0, (201_750, 403_500, 201_775, 201_750)),
+        ("agi.bus_loss_limit", 2026, 0, (256_000, 512_000, 256_000, 256_000)),
+    ],
+)
+def test_indexed_amounts_are_the_irs_amounts(default_law, field, year, slot, amounts):
+    """Rounding rules, base years and base amounts as the statute states them:
+    the estate exemption rounds to the nearest $10,000 from a 2010 base; the
+    childless EITC phase-out start is indexed; the AMT 28 percent threshold
+    rounds to the nearest $100 and the unmarried phase-out threshold is half
+    the joint one; the capital gains thresholds are the TCJA amounts indexed
+    from 2017; the separate-return QBI threshold rounds to $25; the excess
+    business loss limit is OBBBA's, indexed from 2024."""
+    row = default_law.values[field][default_law.years.index(year), :, slot]
+    checked = [(float(x), float(a)) for x, a in zip(row, amounts) if a is not None]
+    assert [x for x, _ in checked] == [a for _, a in checked]
+
+
 def test_the_non_itemizer_charitable_deduction_starts_in_2026(default_law):
     """IRC 170(p) as amended by OBBBA sec. 70424: up to $1,000 of cash gifts,
     $2,000 on a joint return, for taxable years beginning after 2025."""
@@ -130,3 +177,31 @@ def test_the_savers_credit_ends_in_2024_law_and_not_in_2017_law(alternative, rep
         CONFIG_ROOT, (2027,), index_table, alternative=alternative, lint=False
     )
     assert by_status(law, "savers.repeal", 2027) == dict.fromkeys(FILING_STATUSES, repealed)
+
+
+def test_the_additional_standard_deduction_for_a_separate_filer_is_the_married_amount(default_law):
+    """IRC 63(f); Rev. Proc. 2024-40: $1,600 married, $2,000 unmarried, in 2025."""
+    assert by_status(default_law, "std.bonus", 2025) == {
+        1: 2_000.0,
+        2: 1_600.0,
+        3: 1_600.0,
+        4: 2_000.0,
+    }
+
+
+def test_the_salt_phase_down_rate_of_a_separate_filer_is_half(default_law):
+    """2025 Schedule A, line 5e worksheet: the limit is halved after the 30% reduction."""
+    assert by_status(default_law, "item.salt_po_rate", 2025) == {
+        1: 0.30,
+        2: 0.30,
+        3: 0.15,
+        4: 0.30,
+    }
+
+
+def test_the_childless_eitc_phase_out_threshold_is_indexed(default_law):
+    """Rev. Proc. 2023-34: $10,330 single and $17,250 joint in 2024. The golden index
+    table carries the preliminary 2016 chained CPI, which can leave these $10 high."""
+    amounts = by_status(default_law, "eitc.po_thresh_0", 2024)
+    assert amounts[1] == pytest.approx(10_330.0, abs=10.0)
+    assert amounts[2] == pytest.approx(17_250.0, abs=10.0)

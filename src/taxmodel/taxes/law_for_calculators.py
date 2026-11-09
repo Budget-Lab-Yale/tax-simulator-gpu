@@ -175,6 +175,7 @@ QBI = {
     "txbl_inc_limit": Ref("qbi.txbl_inc_limit"),
     "po_type": Ref("qbi.po_type"),
     "min_value": Ref("qbi.min_value"),
+    "char_nonitem_limit": Ref("char.nonitem_limit"),
 }
 
 BELOW_DEDUCTION = {
@@ -195,6 +196,9 @@ BELOW_DEDUCTION = {
     "senior_ded_value": Ref("below.senior_ded_value"),
     "senior_ded_po_thresh": Ref("below.senior_ded_po_thresh"),
     "senior_ded_po_rate": Ref("below.senior_ded_po_rate"),
+    "tip_ded_mfs_eligible": Ref("below.tip_ded_mfs_eligible"),
+    "ot_ded_mfs_eligible": Ref("below.ot_ded_mfs_eligible"),
+    "senior_ded_mfs_eligible": Ref("below.senior_ded_mfs_eligible"),
     # The car loan interest parameters keep their `agi.` names, which reforms
     # and the auto-interest behavioral module refer to.
     "auto_int_ded_limit": Ref("agi.auto_int_ded_limit"),
@@ -345,6 +349,7 @@ CTC = {
     "pi_type": Ref("ctc.pi_type"),
     "pi_rate": Ref("ctc.pi_rate"),
     "pi_range": Ref("ctc.pi_range"),
+    "ss_alt_min_children": Ref("ctc.ss_alt_min_children"),
     "baby_bonus_in_credit": Ref("ctc.baby_bonus_in_credit"),
     "baby_bonus": Ref("ctc.baby_bonus"),
     "baby_bonus_pi_rate": Ref("ctc.baby_bonus_pi_rate"),

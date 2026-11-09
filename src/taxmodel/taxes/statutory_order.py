@@ -261,8 +261,8 @@ def run_1040(
     # calc.credits.calc_caregiver_cred in place of these zeros turns it on.
     zeros = jnp.zeros_like(frame["liab_bc"])
     frame.update({"caregiver_cred_nonref": zeros, "caregiver_cred_ref": zeros})
-    frame.update(calc_ctc(frame, law.ctc))
     frame.update(calc_eitc(frame, law.eitc))
+    frame.update(calc_ctc(frame, law.ctc))
     frame.update(calc_rebate(frame, law.rebate))
     frame.update(calc_wage_subsidy(frame, law.wage_subsidy))
 
