@@ -20,9 +20,9 @@ _channel:
   role: state
 
 eta:
-  value: 5.490630192597397
+  value: 5.511698777525531
   kind: calibrated
-  set: '2026-09-26'
+  set: '2026-11-09'
   target: Curvature of the nontax benefit of selling in the age and gain-share
     selling choice. Fitted by the calibrate command so that a permanent 5% rise
     in every gains rate lowers realizations 10 years on by the declared permanent
@@ -31,28 +31,28 @@ eta:
     Future values are discounted at the nominal ten-year Treasury rate.
   derived_under:
     tax_data: '2026070814'
-    macro_projections: '2026022522'
+    macro_projections: '2026110912'
   invalidated_by: []
   rederive: taxmodel-calibrate
   fitted_at:
-    git_commit: de58bf8ec97e44cd6590296d71a3bdbb3a6095e9
+    git_commit: 9b1c79bfd17e570f6f826ab9d5367847f643e368
     permanent_realization_elasticity: -0.6
     transitory_realization_elasticity: 1.2
 
 timeable_share:
-  value: 0.2621696142596642
+  value: 0.26187705215516954
   kind: calibrated
-  set: '2026-09-26'
+  set: '2026-11-09'
   target: 'The share of a year''s realizations that can be moved between years.
     Fitted by the calibrate command, together with the elasticity, to a transitory
     realization elasticity of 1.2: a rate increase people see coming pulls realizations
     forward, and the response is read in the year the increase is announced.'
   derived_under:
     tax_data: '2026070814'
-    macro_projections: '2026022522'
+    macro_projections: '2026110912'
   invalidated_by: []
   rederive: taxmodel-calibrate
   fitted_at:
-    git_commit: de58bf8ec97e44cd6590296d71a3bdbb3a6095e9
+    git_commit: 9b1c79bfd17e570f6f826ab9d5367847f643e368
     permanent_realization_elasticity: -0.6
     transitory_realization_elasticity: 1.2
