@@ -141,30 +141,18 @@ def _require(columns: Mapping[str, Array], names: Sequence[str], where: str) -> 
         )
 
 
-def _added_up_reading_blanks_as_zero(
-    columns: Mapping[str, Array], names: Sequence[str], template: Array
-) -> Array:
-    """The named columns added up, with a missing value read as zero."""
-    total = jnp.zeros_like(template)
-    for name in names:
-        total = total + jnp.nan_to_num(
-            jnp.asarray(columns[name], dtype=jnp.float64), nan=0.0
-        )
-    return total
-
-
 def haig_simons_income(cell: Mapping[str, Array], frame: Mapping[str, Array]) -> Array:
     """Haig-Simons income for each household, as the module docstring defines it."""
     _require(frame, HAIG_SIMONS_FRAME_COLUMNS, "the household frame")
     expanded_income = jnp.asarray(cell[EXPANDED_INCOME_COLUMN], dtype=jnp.float64)
-    accruals = _added_up_reading_blanks_as_zero(frame, ACCRUAL_COLUMNS, expanded_income)
-    realized_gains = _added_up_reading_blanks_as_zero(
+    accruals = corporate_spread.added_up_reading_blanks_as_zero(frame, ACCRUAL_COLUMNS, expanded_income)
+    realized_gains = corporate_spread.added_up_reading_blanks_as_zero(
         frame, REALIZED_GAIN_COLUMNS, expanded_income
     )
-    defined_contribution = _added_up_reading_blanks_as_zero(
+    defined_contribution = corporate_spread.added_up_reading_blanks_as_zero(
         frame, (DEFINED_CONTRIBUTION_BALANCE_COLUMN,), expanded_income
     )
-    retirement_balances = defined_contribution + _added_up_reading_blanks_as_zero(
+    retirement_balances = defined_contribution + corporate_spread.added_up_reading_blanks_as_zero(
         frame, (DEFINED_BENEFIT_BALANCE_COLUMN,), expanded_income
     )
     has_balances = retirement_balances > 0.0
@@ -202,11 +190,11 @@ def corporate_bases(
     """The labor and capital income the corporate tax is spread over."""
     _require(frame, CORPORATE_BASE_FRAME_COLUMNS, "the household frame")
     template = jnp.asarray(frame[WAGE_COLUMNS[0]], dtype=jnp.float64)
-    wages = _added_up_reading_blanks_as_zero(frame, WAGE_COLUMNS, template)
-    business_income = _added_up_reading_blanks_as_zero(
+    wages = corporate_spread.added_up_reading_blanks_as_zero(frame, WAGE_COLUMNS, template)
+    business_income = corporate_spread.added_up_reading_blanks_as_zero(
         frame, SELF_EMPLOYMENT_AND_FARM_COLUMNS, template
-    ) + _added_up_reading_blanks_as_zero(cell, ("part_scorp",), template)
-    financial_income = _added_up_reading_blanks_as_zero(
+    ) + corporate_spread.added_up_reading_blanks_as_zero(cell, ("part_scorp",), template)
+    financial_income = corporate_spread.added_up_reading_blanks_as_zero(
         frame, FINANCIAL_INCOME_COLUMNS, template
     )
     return corporate_burden.capital_income_base(

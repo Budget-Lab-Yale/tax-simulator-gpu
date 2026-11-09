@@ -51,7 +51,7 @@ the corporate burden top-down instead.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import NamedTuple
 
 import jax.numpy as jnp
@@ -212,12 +212,15 @@ def from_receipts_inputs(
     )
 
 
-def _added_up_reading_blanks_as_zero(
-    frame: Mapping[str, Array], names: tuple[str, ...], template: Array
+def added_up_reading_blanks_as_zero(
+    columns: Mapping[str, Array], names: Sequence[str], template: Array
 ) -> Array:
+    """The named columns added up, with a missing value read as zero."""
     total = jnp.zeros_like(template)
     for name in names:
-        total = total + jnp.nan_to_num(jnp.asarray(frame[name], dtype=jnp.float64), nan=0.0)
+        total = total + jnp.nan_to_num(
+            jnp.asarray(columns[name], dtype=jnp.float64), nan=0.0
+        )
     return total
 
 
@@ -246,13 +249,13 @@ def baseline_bases(
         CAPITAL_INCOME: jnp.asarray(capital_income, dtype=jnp.float64),
     }
     for column in EXPOSURE_FIELD_BY_COLUMN:
-        bases[column] = _added_up_reading_blanks_as_zero(frame, (column,), template)
-    bases[NET_NON_HOUSING_ASSETS] = _added_up_reading_blanks_as_zero(
+        bases[column] = added_up_reading_blanks_as_zero(frame, (column,), template)
+    bases[NET_NON_HOUSING_ASSETS] = added_up_reading_blanks_as_zero(
         frame, NON_HOUSING_ASSET_COLUMNS, template
-    ) - _added_up_reading_blanks_as_zero(frame, NON_MORTGAGE_DEBT_COLUMNS, template)
-    bases[NET_HOME_EQUITY] = _added_up_reading_blanks_as_zero(
+    ) - added_up_reading_blanks_as_zero(frame, NON_MORTGAGE_DEBT_COLUMNS, template)
+    bases[NET_HOME_EQUITY] = added_up_reading_blanks_as_zero(
         frame, HOUSING_ASSET_COLUMNS, template
-    ) - _added_up_reading_blanks_as_zero(frame, HOUSING_DEBT_COLUMNS, template)
+    ) - added_up_reading_blanks_as_zero(frame, HOUSING_DEBT_COLUMNS, template)
     return bases
 
 
