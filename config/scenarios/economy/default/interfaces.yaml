@@ -16,7 +16,7 @@ tax_data_id:
   note: Pins the Tax-Data scenario ID the simulation reads.
 
 macro_projections_vintage:
-  value: '2026022522'
+  value: '2026110912'
   kind: structural
   note: Pins the Macro-Projections vintage (economic/demographic projections) the simulation reads.
 

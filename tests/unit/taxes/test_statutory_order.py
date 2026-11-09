@@ -126,20 +126,20 @@ def test_wealth_and_remittance_are_recorded_after_the_1040(baseline_law):
 
 def test_a_wage_only_single_filer_pays_the_ordinary_schedule(baseline_law):
     # $80,000 of wages, no dependents, no deductions beyond the standard one.
-    # 2027 standard deduction for a single filer is $16,500, so taxable income
-    # is $63,500 and the tax is the ordinary schedule integrated over it.
+    # 2027 standard deduction for a single filer is $16,550, so taxable income
+    # is $63,450 and the tax is the ordinary schedule integrated over it.
     law = single_filer_law(baseline_law)
     out = one_record(law, wages_base1=80_000.0)
     assert float(out["agi"]) == pytest.approx(80_000.0)
-    assert float(out["std_ded"]) == pytest.approx(16_500.0)
-    assert float(out["txbl_inc"]) == pytest.approx(63_500.0)
+    assert float(out["std_ded"]) == pytest.approx(16_550.0)
+    assert float(out["txbl_inc"]) == pytest.approx(63_450.0)
 
     rates = np.asarray(law.tax.ord_rates)
     brackets = np.asarray(law.tax.ord_brackets)
     live = ~np.isnan(rates)
     edges = np.append(brackets[live][1:], np.inf)
     expected = float(
-        np.sum(np.maximum(0.0, np.minimum(63_500.0, edges) - brackets[live]) * rates[live])
+        np.sum(np.maximum(0.0, np.minimum(63_450.0, edges) - brackets[live]) * rates[live])
     )
     assert float(out["liab"]) == pytest.approx(expected)
     # Employee and employer payroll tax on $80,000 of wages, both halves.
@@ -186,7 +186,7 @@ def test_an_itemizer_reports_no_standard_deduction_and_the_reverse(baseline_law)
     standard = one_record(law, wages_base1=80_000.0)
     assert not bool(standard["itemizing"])
     assert float(standard["item_ded"]) == 0.0
-    assert float(standard["std_ded"]) == pytest.approx(16_500.0)
+    assert float(standard["std_ded"]) == pytest.approx(16_550.0)
 
 
 def test_a_single_parent_gets_the_refundable_child_credit(baseline_law):

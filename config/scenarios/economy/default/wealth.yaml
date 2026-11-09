@@ -36,7 +36,7 @@ financing_profile:
     [0.04, 0.80] across 18-80 x 100 cells, monotone in percentile). Memo:
     other/wealth_dynamics/default_s_calibration.md.
   derived_under:
-    macro_projections: '2026022522'
+    macro_projections: '2026110912'
   invalidated_by:
     - config/calibrations/wealth_profiles/default/s.csv
   invalidated_by_hashes:

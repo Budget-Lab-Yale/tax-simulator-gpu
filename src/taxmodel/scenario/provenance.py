@@ -95,7 +95,7 @@ def index_series(
     """The growth rates for indexed law parameters, and the path they came from.
 
     By default they are derived from the Macro-Projections publication the run
-    is pinned to (law/indexes.py). Passing a path to a three-column CSV reads
+    is pinned to (law/indexes.py). Passing a path to a CSV of that table reads
     that file instead, so that a test or a rerun can pin an old table.
 
     The table is returned as a data frame. The frame layer splices its own CPI
