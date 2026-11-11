@@ -593,7 +593,7 @@ def calc_eitc(records: Mapping[str, Array], law: EitcLaw) -> dict[str, Array]:
     # minimum. `student1` and `student2` mark each spouse as a specified
     # student; records that do not carry them have no students. The minimum
     # age of 18 for former foster youth and homeless youth (IRC
-    # 32(n)(1)(B)(ii)(III)) is not modeled.
+    # 32(n)(1)(B)(iii)) is not modeled.
     min_age_student = jnp.maximum(law.min_age, law.min_age_student)  # tie: a comparison between two law parameters, neither the household's income
     min_age1 = jnp.where(
         records.get("student1", 0.0) == 1, min_age_student, law.min_age
