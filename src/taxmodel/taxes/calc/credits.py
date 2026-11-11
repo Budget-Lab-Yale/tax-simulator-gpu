@@ -139,6 +139,7 @@ class EitcLaw:
     po_thresh_3: Array
     inv_inc_limit: Array
     min_age: Array
+    min_age_student: Array
     max_age: Array
     ei_prior_yr: Array
     mfs_eligible: Array
@@ -585,12 +586,27 @@ def calc_eitc(records: Mapping[str, Array], law: EitcLaw) -> dict[str, Array]:
     # return qualifies if either spouse does, and the credit is then based on
     # the couple's combined earned income (IRC 32(c)(1)(A)(ii) and 32(c)(2)).
     has_child = records["n_dep_eitc"] > 0
+    # For 2021 the minimum age is 19, but 24 for a specified student: an
+    # eligible student under IRC 25A(b)(3) in at least five calendar months of
+    # the year (IRC 32(n)(1)(B)). The student minimum applies only where it is
+    # the higher of the two, so in every other year a student faces the general
+    # minimum. `student1` and `student2` mark each spouse as a specified
+    # student; records that do not carry them have no students. The minimum
+    # age of 18 for former foster youth and homeless youth (IRC
+    # 32(n)(1)(B)(iii)) is not modeled.
+    min_age_student = jnp.maximum(law.min_age, law.min_age_student)  # tie: a comparison between two law parameters, neither the household's income
+    min_age1 = jnp.where(
+        records.get("student1", 0.0) == 1, min_age_student, law.min_age
+    )
+    min_age2 = jnp.where(
+        records.get("student2", 0.0) == 1, min_age_student, law.min_age
+    )
     qualifies1 = has_child | (
-        (records["age1"] >= law.min_age) & (records["age1"] <= law.max_age)
+        (records["age1"] >= min_age1) & (records["age1"] <= law.max_age)
     )
     qualifies2 = (~jnp.isnan(records["age2"])) & (
         has_child
-        | ((records["age2"] >= law.min_age) & (records["age2"] <= law.max_age))
+        | ((records["age2"] >= min_age2) & (records["age2"] <= law.max_age))
     )
     joint = records["filing_status"] == 2
     # The dependent flag is compared with zero, so any nonzero value marks a

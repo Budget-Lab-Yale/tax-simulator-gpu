@@ -42,7 +42,7 @@ def test_every_gap_is_reported_at_once(compiled_baseline):
     short = {k: v for k, v in values.items() if not k.startswith("eitc.")}
     with pytest.raises(LawError) as raised:
         law_for_calculators.bind_year(short, years, YEAR)
-    assert str(raised.value).count("compiled law has no field") == 22
+    assert str(raised.value).count("compiled law has no field") == 23
 
 
 def test_a_slot_the_law_leaves_empty_is_a_gap_not_a_nan(compiled_baseline):

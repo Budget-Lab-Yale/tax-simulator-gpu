@@ -29,11 +29,11 @@ Every field is a `float64` array indexed `[year, filing_status, slot]`, shaped `
 
 ## Totals
 
-- Fields: 251
+- Fields: 252
 - Differentiable fields: 188
 - Indexed fields: 43
 - Built by a filing-status mapper: 59
-- By units: calendar year 2, count 10, dollars 119, indicator 46, rate 63, ratio 1, regime code 5, share of AGI 5
+- By units: calendar year 2, count 11, dollars 119, indicator 46, rate 63, ratio 1, regime code 5, share of AGI 5
 
 
 ## `agi`
@@ -214,6 +214,7 @@ Every field is a `float64` array indexed `[year, filing_status, slot]`, shaped `
 | `eitc.max_age` | count | 1 |  |  |  |  |
 | `eitc.mfs_eligible` | indicator | 1 |  |  |  |  |
 | `eitc.min_age` | count | 1 |  |  |  |  |
+| `eitc.min_age_student` | count | 1 |  |  |  |  |
 | `eitc.parent_precert` | indicator | 1 |  |  |  |  |
 | `eitc.pi_end_0` | dollars | 1 |  | yes |  | yes |
 | `eitc.pi_end_1` | dollars | 1 |  | yes |  | yes |

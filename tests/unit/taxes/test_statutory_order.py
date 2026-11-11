@@ -4,11 +4,15 @@ from dataclasses import replace
 
 import jax.numpy as jnp
 import numpy as np
+import pandas as pd
 import pytest
 
-from taxmodel.taxes import statutory_order
+from taxmodel.law import compile_law
+from taxmodel.law.indexes import index_table_from_frame
+from taxmodel.taxes import law_for_calculators, statutory_order
 from taxmodel.taxes.calc.payroll import calc_pr
 from taxmodel.taxes.calc.wealth import WealthLaw
+from tests.conftest import CONFIG_ROOT, INDEX_TABLE
 
 from .chain_steps import run_taxes_by_step
 from .conftest import ESTATE_MEASUREMENT, synthetic_records
@@ -411,3 +415,30 @@ def test_the_declared_calculated_columns_are_exactly_what_the_chain_returns(
     assert set(statutory_order.CALCULATED_COLUMNS) - set(without_estate) == set(
         statutory_order.ESTATE_COLUMNS
     )
+
+
+def test_the_chain_reads_the_student_columns_only_when_the_records_carry_them():
+    """`student1` and `student2` are optional record columns
+    (`OPTIONAL_RECORD_COLUMNS`). Under 2021 law a childless 21-year-old with
+    $10,000 of wages gets the EITC; marked a specified student, the same worker
+    is under the student minimum age of 24 (IRC 32(n)(1)(B)) and gets none.
+    Records without the columns give what records with zeros give, in every
+    column the chain computes."""
+    index_table = index_table_from_frame(pd.read_csv(INDEX_TABLE))
+    compiled = compile_law(CONFIG_ROOT, (2021,), index_table)
+    law = law_for_calculators.bind_year(compiled.values, compiled.years, 2021).for_records(
+        np.asarray([1])
+    )
+    without = synthetic_records([1], age1=21.0, wages_base1=10_000.0)
+    assert not set(statutory_order.OPTIONAL_RECORD_COLUMNS) & set(without)
+    not_students = {**without, "student1": jnp.zeros(1), "student2": jnp.zeros(1)}
+    student = {**without, "student1": jnp.ones(1), "student2": jnp.zeros(1)}
+
+    absent = statutory_order.run_taxes(without, law)
+    zeros = statutory_order.run_taxes(not_students, law)
+    marked = statutory_order.run_taxes(student, law)
+
+    assert absent["eitc"][0] > 0
+    assert marked["eitc"][0] == 0
+    for name in absent:
+        np.testing.assert_array_equal(absent[name], zeros[name], err_msg=name)

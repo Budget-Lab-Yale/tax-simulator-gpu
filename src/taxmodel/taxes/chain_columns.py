@@ -347,6 +347,12 @@ RECORD_COLUMNS = (
     "net_worth",
 )
 
+# Record columns the chain reads when the records carry them and takes as zero
+# when they do not. `student1` and `student2` mark each spouse as a specified
+# student for the earned income credit's minimum age (IRC 32(n)(1)(B));
+# Tax-Data does not carry them, and records without them have no students.
+OPTIONAL_RECORD_COLUMNS = ("student1", "student2")
+
 # What the estate tax needs on top, when it runs. The balance sheet columns
 # are listed in `taxes/calc/estate.py`.
 ESTATE_RECORD_COLUMNS = ("q_death2", *ESTATE_ASSET_COLS, *ESTATE_DEBT_COLS)
