@@ -172,6 +172,13 @@ min_age:
     '2021': 19
     '2022': 25
 
+# Minimum age for a specified student without a qualifying child; applies where it exceeds min_age
+min_age_student:
+  value:
+    '2014': 0
+    '2021': 24
+    '2022': 0
+
 # Maximum age for credit eligibility
 max_age:
   value:

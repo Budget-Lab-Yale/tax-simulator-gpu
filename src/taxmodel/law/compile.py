@@ -83,7 +83,7 @@ UNIT_RULES: tuple[tuple[str, str], ...] = (
     # Ages, counts of dependents, and holding periods in whole years.
     (
         (
-            r"_age$|_age_limit$|^max_age$|^min_age$|_years_held$|_limit_years$"
+            r"_age$|_age_limit$|^max_age$|^min_age$|^min_age_student$|_years_held$|_limit_years$"
             r"|^n_dep_limit$"
         ),
         "count",

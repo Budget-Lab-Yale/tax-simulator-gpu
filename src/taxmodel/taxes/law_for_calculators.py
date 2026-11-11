@@ -376,6 +376,7 @@ EITC = {
     "po_thresh_3": Ref("eitc.po_thresh_3"),
     "inv_inc_limit": Ref("eitc.inv_inc_limit"),
     "min_age": Ref("eitc.min_age"),
+    "min_age_student": Ref("eitc.min_age_student"),
     "max_age": Ref("eitc.max_age"),
     "ei_prior_yr": Ref("eitc.ei_prior_yr"),
     "mfs_eligible": Ref("eitc.mfs_eligible"),

@@ -74,3 +74,17 @@ def test_batch_refuses_records_missing_a_column(tmp_path):
     with pytest.raises(ValueError, match="lacks columns"):
         batch.main(["--records", str(source), "--year", str(YEAR),
                     "--out", str(tmp_path / "taxes.parquet")])
+
+
+@pytest.mark.usefixtures("macro_root")
+def test_batch_reads_the_student_columns_when_the_records_carry_them(tmp_path):
+    """`student1` and `student2` are optional: records without them run (the
+    first test), and records with them do not have them reported as unread."""
+    source = tmp_path / "records.parquet"
+    out = tmp_path / "taxes.parquet"
+    records().assign(student1=0.0, student2=0.0).to_parquet(source, index=False)
+
+    batch.main(["--records", str(source), "--year", str(YEAR), "--out", str(out)])
+
+    manifest = json.loads((tmp_path / "taxes.parquet.manifest.json").read_text())
+    assert not {"student1", "student2"} & set(manifest["columns_supplied_not_read"])

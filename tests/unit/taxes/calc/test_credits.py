@@ -2,7 +2,12 @@ import dataclasses
 
 import jax.numpy as jnp
 import numpy as np
+import pandas as pd
+import pytest
 
+from taxmodel.law import compile_law
+from taxmodel.law.indexes import index_table_from_frame
+from taxmodel.taxes import law_for_calculators
 from taxmodel.taxes.calc.credits import (
     CaregiverCreditLaw,
     CdctcLaw,
@@ -21,6 +26,7 @@ from taxmodel.taxes.calc.credits import (
     calc_savers_cred,
     calc_wage_subsidy,
 )
+from tests.conftest import CONFIG_ROOT, INDEX_TABLE
 
 
 def test_cdctc_shared_expense_cap_and_strict_takeup_boundary():
@@ -231,6 +237,7 @@ def _eitc_law():
         20_000.0,
         1_000.0,
         25.0,
+        0.0,
         64.0,
         0.0,
         0.0,
@@ -301,6 +308,124 @@ def test_eitc_prior_year_election_needs_eligibility_not_current_earnings():
     # prior-year earnings for the $4,000 maximum. A dependent filer and a filer
     # over the investment income limit get nothing.
     np.testing.assert_allclose(actual, [4_000.0, 0.0, 0.0])
+
+
+# The two years the specified-student tests run under: 2021, the one year the
+# American Rescue Plan Act's childless rules apply, and 2023, a year of
+# permanent law.
+STUDENT_RULE_YEARS = (2021, 2023)
+
+
+@pytest.fixture(scope="module")
+def default_law_2021_and_2023():
+    """The default law compiled for 2021 and 2023 with the golden index table."""
+    index_table = index_table_from_frame(pd.read_csv(INDEX_TABLE))
+    law = compile_law(CONFIG_ROOT, STUDENT_RULE_YEARS, index_table)
+    return law.values, law.years
+
+
+def _childless_eitc(compiled, year, filing_status, age1, age2=jnp.nan, **student):
+    """The EITC of one return with no qualifying child and $10,000 of wages,
+    all earned by the first spouse. `student` holds `student1` and `student2`
+    where the records carry them."""
+    values, years = compiled
+    law = law_for_calculators.bind_year(values, years, year).for_records(
+        np.asarray([filing_status])
+    )
+    records = {
+        "dep_status": jnp.zeros(1),
+        "filing_status": jnp.array([filing_status]),
+        "n_dep_eitc": jnp.zeros(1),
+        "age1": jnp.array([age1]),
+        "age2": jnp.array([age2]),
+        "ei1": jnp.array([10_000.0]),
+        "ei2": jnp.zeros(1),
+        "txbl_int": jnp.zeros(1),
+        "exempt_int": jnp.zeros(1),
+        "div_ord": jnp.zeros(1),
+        "div_pref": jnp.zeros(1),
+        "txbl_kg": jnp.zeros(1),
+        "net_rent": jnp.zeros(1),
+        "net_estate": jnp.zeros(1),
+        "r.eitc_precert": jnp.ones(1),
+        "agi": jnp.array([10_000.0]),
+        "ei_prior_yr": jnp.zeros(1),
+        **{name: jnp.array([value]) for name, value in student.items()},
+    }
+    return float(calc_eitc(records, law.eitc)["eitc"][0])
+
+
+def test_the_2021_student_minimum_age_is_24_in_the_default_law(default_law_2021_and_2023):
+    """IRC 32(n)(1)(B): for 2021 the minimum age without a qualifying child is
+    19, and 24 for a specified student. Other years have no student minimum."""
+    values, years = default_law_2021_and_2023
+    assert values["eitc.min_age"][years.index(2021), :, 0].tolist() == [19.0] * 4
+    assert values["eitc.min_age_student"][years.index(2021), :, 0].tolist() == [24.0] * 4
+    assert values["eitc.min_age_student"][years.index(2023), :, 0].tolist() == [0.0] * 4
+
+
+def test_a_21_year_old_student_gets_no_childless_eitc_in_2021(default_law_2021_and_2023):
+    """A 21-year-old with $10,000 of wages meets the 2021 minimum age of 19 and
+    gets the maximum childless credit, 15.3 percent of $9,820; a specified
+    student of the same age is under the student minimum of 24."""
+    worker = _childless_eitc(default_law_2021_and_2023, 2021, 1, 21.0, student1=0.0)
+    student = _childless_eitc(default_law_2021_and_2023, 2021, 1, 21.0, student1=1.0)
+
+    assert worker == pytest.approx(0.153 * 9_820.0)
+    assert student == 0.0
+
+
+def test_a_24_year_old_student_gets_the_childless_eitc_in_2021(default_law_2021_and_2023):
+    student = _childless_eitc(default_law_2021_and_2023, 2021, 1, 24.0, student1=1.0)
+    worker = _childless_eitc(default_law_2021_and_2023, 2021, 1, 24.0, student1=0.0)
+
+    assert student > 0.0
+    assert student == worker
+
+
+def test_the_student_minimum_age_applies_in_2021_only(default_law_2021_and_2023):
+    """Outside 2021 a student faces the general minimum age of 25: a 30-year-old
+    student gets the same credit as any 30-year-old, and a 24-year-old gets
+    none, student or not."""
+    student = _childless_eitc(default_law_2021_and_2023, 2023, 1, 30.0, student1=1.0)
+    worker = _childless_eitc(default_law_2021_and_2023, 2023, 1, 30.0, student1=0.0)
+
+    assert worker > 0.0
+    assert student == worker
+    assert _childless_eitc(default_law_2021_and_2023, 2023, 1, 24.0, student1=1.0) == 0.0
+    assert _childless_eitc(default_law_2021_and_2023, 2023, 1, 24.0, student1=0.0) == 0.0
+
+
+def test_a_joint_return_qualifies_in_2021_if_either_spouse_meets_the_age_test(
+    default_law_2021_and_2023,
+):
+    """A 21-year-old student married to a 22-year-old who is not a student: the
+    second spouse meets the minimum age of 19, which qualifies the return (IRC
+    32(c)(1)(A)(ii)). With both spouses students, neither meets the age test."""
+    one_student = _childless_eitc(
+        default_law_2021_and_2023, 2021, 2, 21.0, 22.0, student1=1.0, student2=0.0
+    )
+    two_students = _childless_eitc(
+        default_law_2021_and_2023, 2021, 2, 21.0, 22.0, student1=1.0, student2=1.0
+    )
+
+    assert one_student > 0.0
+    assert two_students == 0.0
+
+
+@pytest.mark.parametrize("year", STUDENT_RULE_YEARS)
+@pytest.mark.parametrize("age", [21.0, 30.0])
+def test_records_without_the_student_columns_have_no_students(
+    default_law_2021_and_2023, year, age
+):
+    """No input file carries `student1` and `student2` today. Records without
+    them get the credit of records that carry zeros."""
+    without = _childless_eitc(default_law_2021_and_2023, year, 2, age, age)
+    with_zeros = _childless_eitc(
+        default_law_2021_and_2023, year, 2, age, age, student1=0.0, student2=0.0
+    )
+
+    assert without == with_zeros
 
 
 def test_rebate_counts_adults_and_qualified_dependents_then_phases_out():

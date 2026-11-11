@@ -121,7 +121,9 @@ def main(argv=None) -> None:
     missing = sorted(needed - set(frame.columns))
     if missing:
         raise ValueError(f"{a.records} lacks columns the chain reads: {missing}")
-    unread = sorted(set(frame.columns) - needed - set(prepare.OVERLAPPING_COLUMNS) - {"id"})
+    # The chain reads an optional column when the records carry it and takes it as zero when they do not.
+    unread = sorted(set(frame.columns) - needed - set(statutory_order.OPTIONAL_RECORD_COLUMNS)
+                    - set(prepare.OVERLAPPING_COLUMNS) - {"id"})
     print(f"{n:,} records; {len(needed)} columns read; supplied and not read: {unread}", flush=True)
 
     scenario = provenance.load_scenario([a.year], alternative=a.alternative)
