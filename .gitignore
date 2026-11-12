@@ -21,6 +21,9 @@ __pycache__/
 # Same reasoning for resources/: pre-1970 CPI-U annual averages as BLS
 # published them. A fixed historical record the model reads, not model data.
 !resources/*.csv
+# The index columns of the pinned Macro-Projections publication, for the
+# batch command away from the cluster (resources/macro_projections/README.md).
+!resources/macro_projections/*.csv
 # Internal working notes. They stay in the working tree but are not published.
 CLAUDE.md
 CRUFT.md

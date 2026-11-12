@@ -44,6 +44,11 @@ from .indexation import IndexTable
 # the repo.
 DEFAULT_HISTORICAL_CPI = Path("resources/cpiu_historical.csv")
 
+# A copy of the index columns of the pinned Macro-Projections publication, for
+# callers of the batch command who cannot read the cluster. The README in the
+# folder names the vintage.
+BUNDLED_MACRO_PROJECTIONS = Path("resources/macro_projections")
+
 # Macro-Projections column name to tax law series name. The growth rates come
 # from these columns.
 MACRO_SERIES = {
@@ -168,6 +173,7 @@ def index_table_from_frame(frame: pd.DataFrame) -> IndexTable:
 
 
 __all__ = [
+    "BUNDLED_MACRO_PROJECTIONS",
     "DEFAULT_HISTORICAL_CPI",
     "derive_index_table",
     "index_table_from_frame",
