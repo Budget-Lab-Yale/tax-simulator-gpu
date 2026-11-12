@@ -513,9 +513,9 @@ def test_the_wyden_smith_ctc_config_resumes_indexation_after_a_freeze():
     assert {f.field for f in findings} == {"ctc.max_refund_old", "ctc.max_refund_young"}
 
 
-def test_booker_kypa_drops_the_refundability_cap_indexation():
-    """Also real: the reform restates max_refund without repeating i_measure."""
+def test_booker_kypa_removes_the_refundability_cap_indexation_on_purpose():
+    """The reform makes the credit fully refundable from 2026 and restates the
+    refundability caps without indexation. The blocks say remove_indexation, so
+    the lint reports nothing."""
     resolved = resolve_law(CONFIG_ROOT, "public/booker-kypa")
-    findings = lint_law(resolved, LAW_TREE_YEARS, MAX_BRACKETS)
-    assert {f.rule for f in findings} == {DROPPED_INDEXATION}
-    assert {f.field for f in findings} == {"ctc.max_refund_old", "ctc.max_refund_young"}
+    assert lint_law(resolved, LAW_TREE_YEARS, MAX_BRACKETS) == []
