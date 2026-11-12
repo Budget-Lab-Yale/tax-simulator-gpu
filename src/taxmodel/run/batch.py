@@ -11,15 +11,16 @@ same id, with every column the chain computes.
 Steps, all the model's own code:
 1. the records are checked for every column the chain and the frame steps read;
 2. the overlapping wage columns are split and the random draws keyed by record id are attached, as the Tax-Data
-   bridge does for a production run;
-3. the year's law is compiled from the default law folder (or the alternative named) with the default price indexes;
+   bridge does for a production run (with --zero-draws every draw is zero instead);
+3. the year's law is compiled from the default law folder (or the alternative named) with the price indexes of the
+   pinned Macro-Projections publication (with --bundled-macro, the copy of them in resources/macro_projections);
 4. the frame steps (the law join, the state tax workaround, the capital gain price ratio, net worth) and the whole
    income and payroll tax chain run under that law; the estate tax is left out;
 5. with --wage-increment, the chain runs a second time with the primary earner's wages raised by that many dollars,
    and the marginal rates on wages are the change in tax divided by the increment.
 
 Beside the output it writes `<out>.manifest.json`: the commit the caller names, where the code was imported from,
-the JAX version and devices, the law year, the draw seed, the price index table, the input file's SHA-256, a few law
+the JAX version and devices, the law year, the draw seed (or that the draws were zero), the price index source, the input file's SHA-256, a few law
 values by filing status, the columns supplied but not read, and any column with missing values.
 """
 
@@ -64,6 +65,11 @@ def parse_arguments(argv=None) -> argparse.Namespace:
     p.add_argument("--year", type=int, required=True, help="the tax year whose law is applied")
     p.add_argument("--out", required=True, help="output parquet, one row per record, keyed by id")
     p.add_argument("--seed", type=int, default=None, help="seed of the random draws keyed by id (the model's default)")
+    p.add_argument("--zero-draws", action="store_true",
+                   help="set every random draw to zero, so that each random rule (care credit takeup, the excess "
+                        "business loss limit, and so on) applies to every record it can")
+    p.add_argument("--bundled-macro", action="store_true",
+                   help="read the price indexes from the copy in resources/macro_projections, not from the cluster")
     p.add_argument("--alternative", default=None, help="an alternative law folder under config/scenarios/tax_law/alternatives")
     p.add_argument("--commit", default="", help="the commit of this code, recorded in the manifest")
     p.add_argument("--wage-increment", type=float, default=0.0,
@@ -74,7 +80,17 @@ def parse_arguments(argv=None) -> argparse.Namespace:
     return p.parse_args(argv)
 
 
-def run_chain(frame: pd.DataFrame, year: int, annual, builder, double_run: bool, seed: int):
+def record_draws(ids: np.ndarray, seed: int, zero: bool) -> pd.DataFrame:
+    """The random draws for each record id: keyed by id and seed, or all zero."""
+    from taxmodel.frame import prepare
+
+    draws = prepare.keyed_draws(ids, seed=seed)
+    if zero:
+        draws[list(prepare.DRAW_COLUMNS)] = 0.0
+    return draws
+
+
+def run_chain(frame: pd.DataFrame, year: int, annual, builder, double_run: bool, seed: int, zero_draws: bool):
     """The frame steps and the tax chain on one frame of records. Returns the computed columns, the frame-step
     columns, and the law read for each record."""
     import jax.numpy as jnp
@@ -84,7 +100,7 @@ def run_chain(frame: pd.DataFrame, year: int, annual, builder, double_run: bool,
     from taxmodel.years import one_year
 
     frame = prepare.split_overlapping_wages(frame, year)
-    draws = prepare.keyed_draws(frame["id"].to_numpy(), seed=seed)
+    draws = record_draws(frame["id"].to_numpy(), seed, zero_draws)
     frame = frame.merge(draws, on="id", how="left", validate="one_to_one")
     raw = {c: jnp.asarray(frame[c].to_numpy(np.float64)) for c in frame.columns if c != "id"}
     raw["id"] = jnp.asarray(frame["id"].to_numpy(np.int64))
@@ -103,6 +119,7 @@ def main(argv=None) -> None:
     import taxmodel
     from taxmodel.config import check_toolchain
     from taxmodel.frame import build_frame, prepare
+    from taxmodel.law import indexes
     from taxmodel.scenario import law_by_year, provenance
     from taxmodel.taxes import statutory_order
 
@@ -124,14 +141,19 @@ def main(argv=None) -> None:
     unread = sorted(set(frame.columns) - needed - set(prepare.OVERLAPPING_COLUMNS) - {"id"})
     print(f"{n:,} records; {len(needed)} columns read; supplied and not read: {unread}", flush=True)
 
-    scenario = provenance.load_scenario([a.year], alternative=a.alternative)
+    if a.bundled_macro:
+        growth = indexes.derive_index_table(indexes.BUNDLED_MACRO_PROJECTIONS)
+        index_source = str(indexes.BUNDLED_MACRO_PROJECTIONS)
+    else:
+        growth, index_source = provenance.index_series()
+    scenario = provenance.load_scenario([a.year], alternative=a.alternative, growth=growth)
     series = law_by_year.bind_annual_laws(scenario.values, scenario.years, scenario.law_table, [a.year])
     annual = series.by_year[0]
     double_run = statutory_order.charity_double_run_applies(annual.calculator)
     builder = build_frame.make_frame_builder(scenario.indexes, scenario.cluster_death_weight_cap)
     t1 = time.time()
 
-    taxes, built, law = run_chain(frame, a.year, annual, builder, double_run, seed)
+    taxes, built, law = run_chain(frame, a.year, annual, builder, double_run, seed, a.zero_draws)
     out = {"id": frame["id"].to_numpy(np.int64)}
     for k, v in taxes.items():
         out[k] = np.asarray(v, dtype=np.float64)
@@ -162,7 +184,7 @@ def main(argv=None) -> None:
         raised = frame.copy()
         for c in ("wages", "wages1"):
             raised[c] = raised[c] + a.wage_increment
-        taxes_raised, _, _ = run_chain(raised, a.year, annual, builder, double_run, seed)
+        taxes_raised, _, _ = run_chain(raised, a.year, annual, builder, double_run, seed, a.zero_draws)
         for name, column in (("mtr_wages_iit", "liab_iit_net"), ("mtr_wages_payroll", "liab_pr")):
             out[name] = (np.asarray(taxes_raised[column], np.float64) - out[column]) / a.wage_increment
     out = pd.DataFrame(out)
@@ -174,9 +196,9 @@ def main(argv=None) -> None:
                   for k in MANIFEST_LAW_VALUES if k in annual.frame_columns}
     manifest = {"commit": a.commit, "taxmodel_from": where, "jax": jax.__version__,
                 "devices": [str(d) for d in jax.devices()], "law_year": a.year, "alternative": a.alternative,
-                "draw_seed": seed, "records": n, "input": os.path.realpath(a.records),
+                "draw_seed": "all draws zero" if a.zero_draws else seed, "records": n, "input": os.path.realpath(a.records),
                 "input_sha256": file_sha256(a.records), "charity_double_run": bool(double_run),
-                "index_table": provenance.index_series()[1], "law_values_by_filing_status": law_values,
+                "index_table": index_source, "law_values_by_filing_status": law_values,
                 "wage_increment": a.wage_increment, "law_sections": a.law_sections,
                 "columns_supplied_not_read": unread, "missing_values_in_outputs": nan,
                 "seconds": {"setup": round(t1 - t0, 1), "frame steps and taxes": round(t2 - t1, 1)}}

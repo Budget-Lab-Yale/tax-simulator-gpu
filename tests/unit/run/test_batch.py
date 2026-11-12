@@ -8,8 +8,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from taxmodel.config import interfaces
 from taxmodel.frame import build_frame, prepare
+from taxmodel.law import indexes
+from taxmodel.reporting import heir_inputs, receipts_inputs
 from taxmodel.run import batch
+from taxmodel.scenario import prepare as scenario_prepare
+from taxmodel.scenario import provenance
 from taxmodel.taxes import statutory_order
 
 YEAR = 2019
@@ -74,3 +79,43 @@ def test_batch_refuses_records_missing_a_column(tmp_path):
     with pytest.raises(ValueError, match="lacks columns"):
         batch.main(["--records", str(source), "--year", str(YEAR),
                     "--out", str(tmp_path / "taxes.parquet")])
+
+
+def test_zero_draws_are_all_zero():
+    ids = np.array([11, 22, 33], dtype=np.int64)
+    zero = batch.record_draws(ids, prepare.DEFAULT_SEED, zero=True)
+    keyed = batch.record_draws(ids, prepare.DEFAULT_SEED, zero=False)
+    assert list(zero["id"]) == list(ids)
+    assert (zero[list(prepare.DRAW_COLUMNS)] == 0).all().all()
+    assert (keyed[list(prepare.DRAW_COLUMNS)] > 0).all().all()
+
+
+def test_batch_runs_without_the_cluster(tmp_path, monkeypatch):
+    """With --bundled-macro the command reads no upstream publication."""
+    def no_cluster(*args, **kwargs):
+        raise AssertionError("the batch command asked for an upstream publication on the cluster")
+
+    for module in (interfaces, provenance, scenario_prepare, heir_inputs, receipts_inputs):
+        monkeypatch.setattr(module, "interface_root", no_cluster)
+    source = tmp_path / "records.parquet"
+    out = tmp_path / "taxes.parquet"
+    records().to_parquet(source, index=False)
+
+    batch.main(["--records", str(source), "--year", str(YEAR), "--out", str(out),
+                "--bundled-macro", "--zero-draws"])
+
+    taxes = pd.read_parquet(out)
+    assert list(taxes["id"]) == [11, 22]
+    assert not taxes.isna().any().any()
+    assert taxes.loc[0, "liab_iit_net"] > 0
+    manifest = json.loads((tmp_path / "taxes.parquet.manifest.json").read_text())
+    assert manifest["index_table"] == str(indexes.BUNDLED_MACRO_PROJECTIONS)
+    assert manifest["draw_seed"] == "all draws zero"
+
+
+def test_bundled_macro_matches_the_pinned_publication(macro_root):
+    """The copy in resources gives the same index table as the pinned vintage.
+    This fails after a repin until the copy is refreshed."""
+    bundled = indexes.derive_index_table(indexes.BUNDLED_MACRO_PROJECTIONS)
+    pinned = indexes.derive_index_table(macro_root)
+    pd.testing.assert_frame_equal(bundled, pinned, check_exact=True)
