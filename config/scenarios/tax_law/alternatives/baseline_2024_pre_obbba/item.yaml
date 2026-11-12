@@ -189,10 +189,12 @@ limit:
 # Tax value limitation reduction threshold, single returns (i.e. next bracket where rate corresponding to maximum tax value ends)
 limit_tax_value_thresh_single:
   value: Inf
+  remove_indexation: true
   
 # Tax value limitation reduction threshold, single returns (i.e. next bracket where rate corresponding to maximum tax value ends)
 limit_tax_value_thresh_married:
   value: Inf
+  remove_indexation: true
   
 # Tax value limitation reduction rate, SALT (i.e. percentage point diference between maximum statutory tax value and target value) 
 salt_limit_tax_value_rate:

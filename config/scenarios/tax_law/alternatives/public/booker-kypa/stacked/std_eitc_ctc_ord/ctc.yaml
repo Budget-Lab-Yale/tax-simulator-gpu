@@ -200,6 +200,7 @@ max_refund_young:
     '2021': Inf
     '2022': 1400
     '2026': Inf
+  remove_indexation: true
 
 # Maximum refundable CTC per old qualifying child (fully refundable)
 max_refund_old:
@@ -209,6 +210,7 @@ max_refund_old:
     '2021': Inf
     '2022': 1400
     '2026': Inf
+  remove_indexation: true
 
 # Whether prior year earned income qualifies for phase-in
 ei_prior_yr:

@@ -21,6 +21,11 @@ filing_status_mapper:
     '2': kg_sec121_excl_married
     '3': kg_sec121_excl_married / 2
     '4': kg_sec121_excl_single
+  kg_death_gain_excl:
+    '1': kg_death_gain_excl_single
+    '2': kg_death_gain_excl_married
+    '3': kg_death_gain_excl_married / 2
+    '4': kg_death_gain_excl_single
 
 # Whether to tax long-term capital gains and qualified dividends at ordinary rates
 tax_at_ord:

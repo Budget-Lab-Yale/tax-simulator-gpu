@@ -96,6 +96,7 @@ txbl_inc_limit:
 # Minimum deduction amount
 min_value:
   value: 0
+  remove_indexation: true
 
 # Phaseout type: 0 = TCJA design, 1 = May 2025 House-passed OBBB design
 po_type:

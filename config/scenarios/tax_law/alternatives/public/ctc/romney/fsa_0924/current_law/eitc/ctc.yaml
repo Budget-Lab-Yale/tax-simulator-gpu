@@ -16,6 +16,7 @@ value_young:
     '2021': [2000, 1600]
     '2022': [2000, 0]
     '2026': [4200, 0]
+  remove_indexation: true
 
 # Maximum credit value per "old" child
 value_old:
@@ -25,6 +26,7 @@ value_old:
     '2021': [2000, 1000]
     '2022': [2000, 0]
     '2026': [3000, 0] 
+  remove_indexation: true
 
 # Maximum age to qualify as an "old" child
 old_age_limit:
