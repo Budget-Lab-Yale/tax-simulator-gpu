@@ -27,6 +27,8 @@ class AgiLaw:
     tuition_ded_limit: Array
     dpad_limit: Array
     char_above_limit: Array
+    ui_excl_limit: Array
+    ui_excl_magi_limit: Array
     ss: SocialSecurityLaw
 
 
@@ -100,6 +102,28 @@ def calc_agi(records: Mapping[str, Array], law: AgiLaw) -> dict[str, Array]:
         + capped_at(records["tuition_ded"], law.tuition_ded_limit)
         + capped_at(records["dpad"], law.dpad_limit)
     )
+    # Unemployment compensation excluded from gross income: up to $10,200 in
+    # 2020 when AGI figured without the exclusion is under $150,000 (ARPA
+    # section 9042, IRC 85(c)). The records carry one unemployment amount per
+    # return, so the limit applies per return; on a joint return where both
+    # spouses received benefits the exclusion is understated by up to $10,200.
+    # The income test therefore needs taxable benefits and AGI as they would be
+    # without the exclusion.
+    txbl_ss_pre_excl = calc_ss(
+        {"gross_ss": records["gross_ss"], "magi_ss": inc_ex_ss + records["exempt_int"] - above_ded_ex_sl},
+        law.ss,
+    )["txbl_ss"]
+    agi_pre_excl = inc_ex_ss + txbl_ss_pre_excl - above_ded_ex_sl - records["sl_int_ded"]
+    # A dollar more of benefits raises the amount against a fixed cap, so the
+    # tie takes the default (the capped branch). The income test is a cliff in
+    # the law (no exclusion at $150,000 or more); one more dollar of income lands
+    # a return on or above it, so a tie loses the exclusion.
+    ui_excl = jnp.where(
+        agi_pre_excl < law.ui_excl_magi_limit,
+        capped_at(floored_at(records["ui"], 0.0), law.ui_excl_limit),
+        0.0,
+    )
+    inc_ex_ss = inc_ex_ss - ui_excl
     txbl_ss = calc_ss(
         {"gross_ss": records["gross_ss"], "magi_ss": inc_ex_ss + records["exempt_int"] - above_ded_ex_sl},
         law.ss,
@@ -110,6 +134,7 @@ def calc_agi(records: Mapping[str, Array], law: AgiLaw) -> dict[str, Array]:
         "txbl_ss": txbl_ss,
         "excess_bus_loss": excess_bus_loss,
         "char_above_ded": char_above_ded,
+        "ui_excl": ui_excl,
         "gross_inc": gross_inc,
         "above_ded": above_ded,
         "agi": gross_inc - above_ded,

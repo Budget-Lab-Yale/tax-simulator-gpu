@@ -4,7 +4,7 @@ import numpy as np
 from taxmodel.taxes.calc.agi import AgiLaw, SocialSecurityLaw, calc_agi, calc_ss
 
 SS = SocialSecurityLaw(0.5, jnp.array([0.5, 0.85]), jnp.array([25000.0, 34000.0]))
-LAW = AgiLaw(2100.0, 1000.0, 4000.0, 5000.0, 300.0, SS)
+LAW = AgiLaw(2100.0, 1000.0, 4000.0, 5000.0, 300.0, 0.0, 150000.0, SS)
 NAMES = ["wages_base1", "wages_base2", "tips1", "tips2", "ot1", "ot2", "txbl_int", "exempt_int", "div_ord", "div_pref", "txbl_ira_dist", "txbl_pens_dist", "gross_ss", "txbl_kg", "other_gains", "state_ref", "alimony", "divorce_year", "sole_prop1", "sole_prop2", "sch_e", "pt", "farm1", "farm2", "ui", "other_inc", "ed_exp", "hsa_contr", "liab_seca_er", "trad_contr_ira", "sl_int_ded", "keogh_contr", "se_health", "early_penalty", "alimony_exp", "tuition_ded", "dpad", "char_cash", "char_noncash", "other_above_ded", "r.bus_loss"]
 
 
@@ -43,3 +43,28 @@ def test_car_loan_interest_does_not_reduce_agi():
     out = calc_agi({**records(wages_base1=40_000.0), "auto_int_exp": jnp.asarray(3_000.0)}, LAW)
     np.testing.assert_allclose(out["agi"], 40_000.0)
     assert "auto_int_ded" not in out
+
+
+# 2020: up to $10,200 of unemployment compensation excluded per return when AGI
+# figured without the exclusion is under $150,000 (ARPA section 9042).
+def test_ui_exclusion_2020():
+    law = AgiLaw(2100.0, 1000.0, 4000.0, 5000.0, 300.0, 10_200.0, 150_000.0, SS)
+    wages = jnp.array([20_000.0, 20_000.0, 145_000.0, 139_000.0, 20_000.0])
+    ui = jnp.array([15_000.0, 5_000.0, 10_000.0, 10_000.0, 0.0])
+    out = calc_agi(records(wages_base1=wages, ui=ui), law)
+    # capped at $10,200; all of $5,000; none at $155,000 before the exclusion;
+    # all of $10,000 at $149,000; nothing without benefits
+    np.testing.assert_allclose(out["ui_excl"], [10_200.0, 5_000.0, 0.0, 10_000.0, 0.0])
+    np.testing.assert_allclose(out["agi"], wages + ui - out["ui_excl"])
+    # with no exclusion in the law the same returns exclude nothing
+    np.testing.assert_allclose(calc_agi(records(wages_base1=wages, ui=ui), LAW)["ui_excl"], 0.0)
+
+
+def test_ui_exclusion_lowers_taxable_social_security():
+    law = AgiLaw(2100.0, 1000.0, 4000.0, 5000.0, 300.0, 10_200.0, 150_000.0, SS)
+    rec = records(wages_base1=20_000.0, ui=10_000.0, gross_ss=20_000.0)
+    with_excl = calc_agi(rec, law)
+    without = calc_agi(rec, LAW)
+    assert float(with_excl["txbl_ss"]) < float(without["txbl_ss"])
+    np.testing.assert_allclose(with_excl["ui_excl"], 10_000.0)
+

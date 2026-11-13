@@ -158,6 +158,32 @@
       "padding": "nan"
     },
     {
+      "name": "agi.ui_excl_limit",
+      "parameter": "agi",
+      "subparameter": "ui_excl_limit",
+      "dtype": "float64",
+      "units": "dollars",
+      "slots_used": 1,
+      "varies_by_filing_status": false,
+      "indexed": false,
+      "from_mapper": false,
+      "differentiable": true,
+      "padding": "nan"
+    },
+    {
+      "name": "agi.ui_excl_magi_limit",
+      "parameter": "agi",
+      "subparameter": "ui_excl_magi_limit",
+      "dtype": "float64",
+      "units": "dollars",
+      "slots_used": 1,
+      "varies_by_filing_status": false,
+      "indexed": false,
+      "from_mapper": false,
+      "differentiable": true,
+      "padding": "nan"
+    },
+    {
       "name": "alt_max.exempt",
       "parameter": "alt_max",
       "subparameter": "exempt",

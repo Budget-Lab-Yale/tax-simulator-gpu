@@ -40,6 +40,7 @@ ONE_1040_COLUMNS = (
     "txbl_ss",
     "excess_bus_loss",
     "char_above_ded",
+    "ui_excl",
     "gross_inc",
     "above_ded",
     "agi",
