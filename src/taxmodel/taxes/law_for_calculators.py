@@ -108,6 +108,8 @@ AGI = {
     "tuition_ded_limit": Ref("agi.tuition_ded_limit"),
     "dpad_limit": Ref("agi.dpad_limit"),
     "char_above_limit": Ref("char.above_limit"),
+    "ui_excl_limit": Ref("agi.ui_excl_limit"),
+    "ui_excl_magi_limit": Ref("agi.ui_excl_magi_limit"),
 }
 
 CAPITAL_GAINS = {
